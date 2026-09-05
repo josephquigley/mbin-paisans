@@ -1,0 +1,16 @@
+.push-prompt {
+  // Breathing room above, so the prompt does not sit flush against the navigation
+  // it appears directly beneath. It is the first thing in the content column, and
+  // without this it reads as part of the header rather than as its own notice.
+  margin-top: 1.5rem;
+
+  p {
+    margin-top: 0;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}
