@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\MessageHandler\ActivityPub\Inbox;
 
 use App\Entity\Magazine;
+use App\Entity\MagazineFollow;
 use App\Entity\User;
 use App\Message\ActivityPub\Inbox\FollowMessage;
 use App\Message\Contracts\MessageInterface;
@@ -131,9 +132,11 @@ class FollowHandler extends MbinMessageHandler
                 $this->userManager->acceptFollow($object, $actor);
             }
 
-            //        if ($object instanceof Magazine) {
-            //            $this->magazineManager->acceptFollow($actor, $object);
-            //        }
+            if ($object instanceof Magazine) {
+                // $object is our own magazine, the follower. $actor is the remote
+                // actor it followed, who just accepted.
+                $this->updateMagazineFollowStatus($object, $actor, MagazineFollow::STATUS_ACCEPTED);
+            }
         }
     }
 
@@ -142,9 +145,29 @@ class FollowHandler extends MbinMessageHandler
         if (!empty($object)) {
             match (true) {
                 $object instanceof User => $this->userManager->rejectFollow($object, $actor),
-                $object instanceof Magazine => $this->magazineManager->unsubscribe($object, $actor),
+                // $object is our own magazine, the follower, not a local subscriber
+                // to unsubscribe. $actor is the remote actor that rejected the follow.
+                $object instanceof Magazine => $this->updateMagazineFollowStatus($object, $actor, MagazineFollow::STATUS_REJECTED),
                 default => throw new \LogicException(),
             };
+        }
+    }
+
+    /**
+     * Records whether a remote actor accepted or rejected our magazine's Follow
+     * of it, so the moderator-facing status is not left permanently pending.
+     */
+    private function updateMagazineFollowStatus(Magazine $magazine, User|Magazine $followedActor, string $status): void
+    {
+        $magazineFollow = $this->entityManager->getRepository(MagazineFollow::class)->findOneBy(
+            $followedActor instanceof User
+                ? ['magazine' => $magazine, 'followingUser' => $followedActor]
+                : ['magazine' => $magazine, 'followingMagazine' => $followedActor]
+        );
+
+        if (null !== $magazineFollow) {
+            $magazineFollow->status = $status;
+            $this->entityManager->flush();
         }
     }
 }

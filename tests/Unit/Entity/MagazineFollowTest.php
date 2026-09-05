@@ -34,4 +34,11 @@ class MagazineFollowTest extends TestCase
         self::assertNull($follow->followingUser);
         self::assertSame($remote, $follow->getFollowingActor());
     }
+
+    public function testANewFollowStartsPending(): void
+    {
+        $follow = new MagazineFollow($this->createMock(Magazine::class), $this->createMock(User::class));
+
+        self::assertSame(MagazineFollow::STATUS_PENDING, $follow->status);
+    }
 }
