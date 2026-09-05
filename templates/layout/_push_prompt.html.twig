@@ -13,7 +13,18 @@
          data-push-prompt-application-server-key-value="{{ push_application_server_key() }}"
          hidden>
         <p data-push-prompt-target="enableText" hidden>{{ 'push_prompt_body'|trans }}</p>
-        <p data-push-prompt-target="installText" hidden>{{ 'push_prompt_body_install'|trans({'%site%': kbin_title()}) }}</p>
+        {#
+            The device name is a span the controller narrows to "iPhone" or "iPad",
+            because the server cannot tell them apart: iPadOS reports a Mac User-Agent.
+            It falls back to naming both, so a failed check still reads correctly. The
+            raw filter is safe here, both halves being our own translated strings.
+        #}
+        <p data-push-prompt-target="installText" hidden>
+            {{ 'push_prompt_body_install'|trans({
+                '%device%': '<span data-push-prompt-target="deviceName">'~('push_prompt_device_default'|trans)~'</span>',
+                '%site%': kbin_title(),
+            })|raw }}
+        </p>
         <div class="push-prompt__actions">
             <button type="button"
                     class="btn btn__primary"
