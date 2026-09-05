@@ -6,6 +6,7 @@ namespace App\Repository;
 
 use App\Entity\Magazine;
 use App\Entity\MagazineFollow;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -41,5 +42,25 @@ class MagazineFollowRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
 
         return $result?->magazine;
+    }
+
+    /**
+     * @return MagazineFollow[]
+     */
+    public function findByMagazine(Magazine $magazine): array
+    {
+        return $this->findBy(['magazine' => $magazine], ['createdAt' => 'DESC']);
+    }
+
+    /**
+     * Whether the magazine already follows this actor, regardless of status.
+     */
+    public function findOneByMagazineAndActor(Magazine $magazine, User|Magazine $actor): ?MagazineFollow
+    {
+        return $this->findOneBy(
+            $actor instanceof User
+                ? ['magazine' => $magazine, 'followingUser' => $actor]
+                : ['magazine' => $magazine, 'followingMagazine' => $actor]
+        );
     }
 }
