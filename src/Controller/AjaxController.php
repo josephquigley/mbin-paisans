@@ -344,7 +344,11 @@ class AjaxController extends AbstractController
     {
         $user = $this->getUserOrThrow();
         try {
-            $this->pushSubscriptionManager->sendTextToUser($user, new PushNotification(null, '', $this->translator->trans('test_push_message')), specificDeviceKey: $payload->deviceKey);
+            $failures = $this->pushSubscriptionManager->sendTextToUser($user, new PushNotification(null, '', $this->translator->trans('test_push_message')), specificDeviceKey: $payload->deviceKey);
+
+            if (!empty($failures)) {
+                return new JsonResponse(['error' => implode('; ', $failures)], status: 502);
+            }
 
             return new JsonResponse();
         } catch (\ErrorException $e) {

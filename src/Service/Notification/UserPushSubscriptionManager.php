@@ -33,9 +33,11 @@ class UserPushSubscriptionManager
     }
 
     /**
+     * @return string[] the failure reason of every send that the push service refused, empty when all of them succeeded
+     *
      * @throws \ErrorException
      */
-    public function sendTextToUser(User $user, PushNotification|Notification $pushNotification, ?string $specificDeviceKey = null, ?AccessToken $specificToken = null): void
+    public function sendTextToUser(User $user, PushNotification|Notification $pushNotification, ?string $specificDeviceKey = null, ?AccessToken $specificToken = null): array
     {
         $webPush = $this->getWebPush();
         $criteria = ['user' => $user];
@@ -65,6 +67,8 @@ class UserPushSubscriptionManager
                 payload: json_encode($toSend)
             );
         }
+        $failures = [];
+
         /**
          * Check sent results.
          *
@@ -76,7 +80,8 @@ class UserPushSubscriptionManager
             if ($report->isSuccess()) {
                 $this->logger->debug('[v] Message sent successfully for subscription {e}.', ['e' => $endpoint]);
             } else {
-                $this->logger->debug('[x] Message failed to sent for subscription {e}: {r}', ['e' => $endpoint, 'r' => $report->getReason()]);
+                $failures[] = $report->getReason();
+                $this->logger->warning('[x] Message failed to sent for subscription {e}: {r}', ['e' => $endpoint, 'r' => $report->getReason()]);
                 if ($report->isSubscriptionExpired()) {
                     $subscriptions = $this->pushSubscriptionRepository->findBy(['endpoint' => $endpoint]);
                     foreach ($subscriptions as $sub) {
@@ -86,6 +91,24 @@ class UserPushSubscriptionManager
                 }
             }
         }
+
+        return $failures;
+    }
+
+    /**
+     * The "sub" claim of the VAPID token, which RFC 8292 section 2.1 requires to be a
+     * "mailto:" or "https:" URI so that a push service operator can reach the sender.
+     * Some push services enforce that: Apple refuses a bare domain with 403 BadJwtToken.
+     */
+    public function getVapidSubject(): string
+    {
+        $contactEmail = trim((string) $this->settingsManager->get('KBIN_CONTACT_EMAIL'));
+
+        if ('' !== $contactEmail) {
+            return 'mailto:'.$contactEmail;
+        }
+
+        return 'https://'.$this->settingsManager->get('KBIN_DOMAIN');
     }
 
     /**
@@ -96,7 +119,7 @@ class UserPushSubscriptionManager
         $site = $this->siteRepository->findAll()[0];
         $auth = [
             'VAPID' => [
-                'subject' => $this->settingsManager->get('KBIN_DOMAIN'),
+                'subject' => $this->getVapidSubject(),
                 'publicKey' => $site->pushPublicKey,
                 'privateKey' => $site->pushPrivateKey,
             ],
