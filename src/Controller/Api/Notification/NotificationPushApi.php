@@ -204,6 +204,11 @@ class NotificationPushApi extends NotificationBaseApi
         ],
         content: new OA\JsonContent(ref: new Model(type: TooManyRequestsErrorSchema::class))
     )]
+    #[OA\Response(
+        response: 502,
+        description: 'The push service refused the notification. The "error" field carries its reason.',
+        content: new OA\JsonContent(properties: [new OA\Property(property: 'error', type: 'string')], type: 'object')
+    )]
     #[OA\Tag(name: 'notification')]
     #[Security(name: 'oauth2', scopes: ['user:notification:read'])]
     #[IsGranted('ROLE_OAUTH2_USER:NOTIFICATION:READ')]
@@ -225,7 +230,11 @@ class NotificationPushApi extends NotificationBaseApi
         if ($sub) {
             $testNotification = new PushNotification(null, '', $translator->trans('test_push_message', locale: $sub->locale));
             try {
-                $pushSubscriptionManager->sendTextToUser($user, $testNotification, specificToken: $apiToken);
+                $failures = $pushSubscriptionManager->sendTextToUser($user, $testNotification, specificToken: $apiToken);
+
+                if (!empty($failures)) {
+                    return new JsonResponse(['error' => implode('; ', $failures)], status: 502, headers: $headers);
+                }
 
                 return new JsonResponse(headers: $headers);
             } catch (\ErrorException $e) {

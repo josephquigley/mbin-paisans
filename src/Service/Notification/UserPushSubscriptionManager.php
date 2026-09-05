@@ -67,12 +67,13 @@ class UserPushSubscriptionManager
                 payload: json_encode($toSend)
             );
         }
+        $failures = [];
+
         /**
          * Check sent results.
          *
          * @var MessageSentReport $report
          */
-        $failures = [];
         foreach ($webPush->flush() as $report) {
             $endpoint = $report->getRequest()->getUri()->__toString();
 
