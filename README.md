@@ -108,19 +108,19 @@ Unofficial magazines:
                 </a>
             </td>
             <td align="center">
-                <a href="https://github.com/asdfzdfj">
-                    <img src="https://avatars.githubusercontent.com/u/20770492?v=4" width="100;" alt="asdfzdfj"/>
+                <a href="https://github.com/josephquigley">
+                    <img src="https://avatars.githubusercontent.com/u/682509?v=4" width="100;" alt="josephquigley"/>
                     <br />
-                    <sub><b>asdfzdfj</b></sub>
+                    <sub><b>Joseph Quigley</b></sub>
                 </a>
             </td>
 		</tr>
 		<tr>
             <td align="center">
-                <a href="https://github.com/josephquigley">
-                    <img src="https://avatars.githubusercontent.com/u/682509?v=4" width="100;" alt="josephquigley"/>
+                <a href="https://github.com/asdfzdfj">
+                    <img src="https://avatars.githubusercontent.com/u/20770492?v=4" width="100;" alt="asdfzdfj"/>
                     <br />
-                    <sub><b>Joseph Quigley</b></sub>
+                    <sub><b>asdfzdfj</b></sub>
                 </a>
             </td>
             <td align="center">
