@@ -934,6 +934,10 @@ manually_approves_followers: Manually approves followers
 register_push_notifications_button: Register For Push Notifications
 unregister_push_notifications_button: Remove Push Registration
 test_push_notifications_button: Test Push Notifications
+push_prompt_body: Get notified when someone replies to you or sends you a message.
+push_prompt_body_install: 'To get notifications on this device, add this site to your home screen: tap the Share button, then Add to Home Screen. Open it from there and you will be asked to turn notifications on.'
+push_prompt_enable: Turn on notifications
+push_prompt_decline: 'No thanks'
 test_push_message: Hello World!
 notification_title_new_comment: New comment
 notification_title_removed_comment: A comment was removed

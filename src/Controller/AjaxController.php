@@ -344,6 +344,23 @@ class AjaxController extends AbstractController
         }
     }
 
+    /**
+     * Record that the user does not want to be asked about push notifications again.
+     *
+     * The flag lives on the user rather than in the browser so that a refusal follows
+     * them to a new device, instead of the prompt reappearing on each one.
+     */
+    #[IsGranted('ROLE_USER')]
+    public function declinePushPrompt(): JsonResponse
+    {
+        $user = $this->getUserOrThrow();
+        $user->pushPromptDeclined = true;
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
+
+        return new JsonResponse();
+    }
+
     public function testPushNotification(#[MapRequestPayload] TestPushRequestPayload $payload): JsonResponse
     {
         $user = $this->getUserOrThrow();
