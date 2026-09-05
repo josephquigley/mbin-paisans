@@ -15,7 +15,7 @@ import { Controller } from '@hotwired/stimulus';
  * app on iOS, there is a single Enable button.
  */
 export default class extends Controller {
-    static targets = ['enableText', 'installText', 'enableButton', 'installLink'];
+    static targets = ['enableText', 'installText', 'enableButton', 'installLink', 'deviceName'];
     static values = { applicationServerKey: String };
 
     async connect() {
@@ -34,6 +34,7 @@ export default class extends Controller {
         // install instruction exists to serve, which is exactly the bug this ordering
         // fixes.
         if (this.isIos() && !this.isStandalone()) {
+            this.nameTheDevice();
             this.installTextTarget.hidden = false;
             this.installLinkTarget.hidden = false;
             this.element.hidden = false;
@@ -97,6 +98,24 @@ export default class extends Controller {
         await fetch('/ajax/decline_push_prompt', { method: 'post' })
             .then(ThrowResponseIfNotOk)
             .catch((error) => console.error(error));
+    }
+
+    /**
+     * Narrows "iPhone or iPad" to whichever one this is. The User-Agent cannot be
+     * trusted for the iPad, which reports a Mac by default since iPadOS 13, so the
+     * iPad is identified the same way isIos() finds it: a Mac platform that has a
+     * touchscreen. If neither matches, the default naming both devices stands.
+     */
+    nameTheDevice() {
+        if (!this.hasDeviceNameTarget) {
+            return;
+        }
+
+        if (/iPhone/.test(navigator.userAgent)) {
+            this.deviceNameTarget.textContent = 'iPhone';
+        } else if (/iPad/.test(navigator.userAgent) || 'MacIntel' === navigator.platform) {
+            this.deviceNameTarget.textContent = 'iPad';
+        }
     }
 
     isIos() {
