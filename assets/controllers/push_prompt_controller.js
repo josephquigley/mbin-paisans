@@ -15,7 +15,7 @@ import { Controller } from '@hotwired/stimulus';
  * app on iOS, there is a single Enable button.
  */
 export default class extends Controller {
-    static targets = ['enableText', 'installText', 'enableButton'];
+    static targets = ['enableText', 'installText', 'enableButton', 'installLink'];
     static values = { applicationServerKey: String };
 
     async connect() {
@@ -35,6 +35,7 @@ export default class extends Controller {
         // fixes.
         if (this.isIos() && !this.isStandalone()) {
             this.installTextTarget.hidden = false;
+            this.installLinkTarget.hidden = false;
             this.element.hidden = false;
 
             return;

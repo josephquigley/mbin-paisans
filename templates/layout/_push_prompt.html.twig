@@ -13,13 +13,24 @@
          data-push-prompt-application-server-key-value="{{ push_application_server_key() }}"
          hidden>
         <p data-push-prompt-target="enableText" hidden>{{ 'push_prompt_body'|trans }}</p>
-        <p data-push-prompt-target="installText" hidden>{{ 'push_prompt_body_install'|trans }}</p>
+        <p data-push-prompt-target="installText" hidden>{{ 'push_prompt_body_install'|trans({'%site%': kbin_title()}) }}</p>
         <div class="push-prompt__actions">
             <button type="button"
                     class="btn btn__primary"
                     data-push-prompt-target="enableButton"
                     data-action="push-prompt#enable"
                     hidden>{{ 'push_prompt_enable'|trans }}</button>
+            {#
+                Apple's own instructions, with the screenshots we cannot produce. Linked
+                rather than reproduced: the share sheet changes between iOS versions, and
+                a copy of it here would go stale without anyone noticing.
+            #}
+            <a href="https://support.apple.com/guide/iphone/open-as-web-app-iphea86e5236/ios"
+               class="btn btn__primary"
+               target="_blank"
+               rel="noopener noreferrer"
+               data-push-prompt-target="installLink"
+               hidden>{{ 'push_prompt_show_me_how'|trans }}</a>
             <button type="button"
                     class="btn btn__secondary"
                     data-action="push-prompt#decline">{{ 'push_prompt_decline'|trans }}</button>
