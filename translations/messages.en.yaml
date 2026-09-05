@@ -935,7 +935,8 @@ register_push_notifications_button: Register For Push Notifications
 unregister_push_notifications_button: Remove Push Registration
 test_push_notifications_button: Test Push Notifications
 push_prompt_body: Get notified when someone replies to you or sends you a message.
-push_prompt_body_install: 'To get notifications on this device, add this site to your home screen: tap the Share button, then Add to Home Screen. Open it from there and you will be asked to turn notifications on.'
+push_prompt_body_install: 'Notifications need one extra step on iPhone and iPad, because only apps on your Home Screen can send them. Tap the Share button at the bottom of Safari (a square with an arrow pointing up), choose Add to Home Screen, then open %site% from the new icon: it will ask you to turn notifications on.'
+push_prompt_show_me_how: Show me how
 push_prompt_enable: Turn on notifications
 push_prompt_decline: 'No thanks'
 test_push_message: Hello World!
