@@ -89,6 +89,11 @@ ajax_test_notification_push:
     path: /ajax/test_push
     methods: [ POST ]
 
+ajax_decline_push_prompt:
+    controller: App\Controller\AjaxController::declinePushPrompt
+    path: /ajax/decline_push_prompt
+    methods: [ POST ]
+
 ajax_fetch_users_suggestions:
   controller: App\Controller\AjaxController::fetchUsersSuggestions
   defaults: { _format: json }

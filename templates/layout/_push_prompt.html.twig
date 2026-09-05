@@ -1,0 +1,28 @@
+{#
+    Prompt to turn on push notifications, shown to a logged in user who has not
+    already refused it. Rendered hidden: the controller reveals it only after it
+    has checked what this browser can actually do, because two of the three facts
+    that matter are not knowable on the server. Whether this device already has a
+    subscription is one (subscriptions are per device), and whether the user has
+    already blocked notifications at the browser or OS level is the other.
+#}
+{% if app.user and not app.user.pushPromptDeclined %}
+    <div id="push-prompt"
+         class="push-prompt section section--small"
+         data-controller="push-prompt"
+         data-push-prompt-application-server-key-value="{{ push_application_server_key() }}"
+         hidden>
+        <p data-push-prompt-target="enableText" hidden>{{ 'push_prompt_body'|trans }}</p>
+        <p data-push-prompt-target="installText" hidden>{{ 'push_prompt_body_install'|trans }}</p>
+        <div class="push-prompt__actions">
+            <button type="button"
+                    class="btn btn__primary"
+                    data-push-prompt-target="enableButton"
+                    data-action="push-prompt#enable"
+                    hidden>{{ 'push_prompt_enable'|trans }}</button>
+            <button type="button"
+                    class="btn btn__secondary"
+                    data-action="push-prompt#decline">{{ 'push_prompt_decline'|trans }}</button>
+        </div>
+    </div>
+{% endif %}
