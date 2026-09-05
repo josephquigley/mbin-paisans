@@ -1047,7 +1047,7 @@ class ActivityPubManager
             }
         }
 
-        $actorUrl = isset($object['attributedTo'])
+        $actorUrl = null === $magazine && isset($object['attributedTo'])
             ? $this->getSingleActorFromAttributedTo($object['attributedTo'])
             : null;
 

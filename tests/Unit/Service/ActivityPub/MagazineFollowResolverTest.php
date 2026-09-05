@@ -53,14 +53,21 @@ class MagazineFollowResolverTest extends TestCase
         self::assertSame($this->random, $this->resolver->resolve(null, 'https://elsewhere.example/users/nobody'));
     }
 
-    public function testAMissingActorUrlFallsBackToRandom(): void
+    public function testANullActorUrlFallsBackToRandom(): void
     {
-        // Known limitation, spec section 2.6. A Group relays with Announce and
-        // ChainActivityHandler passes only the inner object on, so the
-        // announcer is invisible here and attributedTo names the original
-        // author. Routing therefore cannot match the announcer's follow. This
-        // test pins the gap: if it starts failing, announce handling changed
-        // and the spec needs updating before this test does.
+        // Pins null-safety of the fallback chain: resolve() must tolerate a
+        // null actor URL end to end and still land on 'random'.
+        //
+        // This is not a test of the Group/Announce gap recorded in spec
+        // section 2.6 of specs/08-magazine-follows.md. In that scenario the
+        // actor URL is not null: a relayed Announce still carries the
+        // original author's id in attributedTo, and the gap is that no
+        // magazine follows that author, which is the case already covered by
+        // testAnUnfollowedActorFallsBackToRandom above. A resolver test
+        // cannot detect the Group/Announce gap at all, since the announcing
+        // actor is lost one level up in ChainActivityHandler, outside this
+        // class's call graph. A real guard for that gap belongs in a test
+        // over ChainActivityHandler and is out of scope here.
         $this->follows->method('findMagazineFollowing')->with(null)->willReturn(null);
         $this->magazines->method('findOneByName')->with('random')->willReturn($this->random);
 
