@@ -277,6 +277,12 @@ flash_thread_unpin_success: The thread has been successfully unpinned.
 flash_magazine_new_success: The magazine has been created successfully. You can
   now add new content or explore the magazine's administration panel.
 flash_magazine_edit_success: The magazine has been successfully edited.
+flash_magazine_follow_add_success: The follow has been added.
+flash_magazine_follow_not_found_error: That actor could not be found.
+flash_magazine_follow_exists_error: This magazine already follows that actor.
+flash_magazine_follow_restricted_error: This magazine only accepts posts from
+  moderators, so a follow here would never deliver anything. Turn off "posting
+  restricted to moderators" first.
 flash_mark_as_adult_success: The post has been successfully marked as NSFW.
 flash_unmark_as_adult_success: The post has been successfully unmarked as NSFW.
 too_many_requests: Limit exceeded, please try again later.
@@ -339,8 +345,13 @@ unban_hashtag_description: Unbanning a hashtag will allow creating posts with
 filters: Filters
 approved: Approved
 rejected: Rejected
+accepted: Accepted
 add_moderator: Add moderator
 add_badge: Add badge
+follows: Follows
+add_follow: Add follow
+magazine_follow_actor: Actor handle or URL
+magazine_follow_actor_placeholder: '@user@instance.tld or https://instance.tld/u/user'
 bans: Bans
 created: Created
 expires: Expires
