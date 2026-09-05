@@ -342,11 +342,18 @@ class ActivityJsonBuilder
             $activityObject = $this->groupFactory->getActivityPubId($object);
         }
 
+        $actor = $activity->getActor();
+        if ($actor instanceof User) {
+            $activityActor = $this->personFactory->getActivityPubId($actor);
+        } else {
+            $activityActor = $this->groupFactory->getActivityPubId($actor);
+        }
+
         return [
             '@context' => $this->contextsProvider->referencedContexts(),
             'id' => $this->urlGenerator->generate('ap_object', ['id' => $activity->uuid], UrlGeneratorInterface::ABSOLUTE_URL),
             'type' => 'Follow',
-            'actor' => $this->personFactory->getActivityPubId($activity->userActor),
+            'actor' => $activityActor,
             'object' => $activityObject,
             'to' => [
                 $activityObject,
