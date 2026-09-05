@@ -24,22 +24,28 @@ export default class extends Controller {
             return;
         }
 
-        if (!('serviceWorker' in navigator) || !('Notification' in window)) {
+        if (!('serviceWorker' in navigator)) {
+            return;
+        }
+
+        // This check comes FIRST, before any capability check, because iOS Safari
+        // outside an installed web app defines neither Notification nor PushManager.
+        // Testing for those before this point returns early on the one platform the
+        // install instruction exists to serve, which is exactly the bug this ordering
+        // fixes.
+        if (this.isIos() && !this.isStandalone()) {
+            this.installTextTarget.hidden = false;
+            this.element.hidden = false;
+
+            return;
+        }
+
+        if (!('Notification' in window) || !('PushManager' in window)) {
             return;
         }
 
         if ('denied' === Notification.permission) {
             // Blocked at the browser or OS level. Nothing this page does can undo that.
-            return;
-        }
-
-        if (!('PushManager' in window)) {
-            // iOS Safari outside the installed app: the API only appears once installed.
-            if (this.isIos() && !this.isStandalone()) {
-                this.installTextTarget.hidden = false;
-                this.element.hidden = false;
-            }
-
             return;
         }
 
