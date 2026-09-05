@@ -25,6 +25,13 @@ class MagazineFollow
         CreatedAtTrait::__construct as createdAtTraitConstruct;
     }
 
+    public const string STATUS_PENDING = 'pending';
+    public const string STATUS_ACCEPTED = 'accepted';
+    public const string STATUS_REJECTED = 'rejected';
+
+    #[Column(type: 'string', nullable: false, options: ['default' => self::STATUS_PENDING])]
+    public string $status = self::STATUS_PENDING;
+
     #[ManyToOne(targetEntity: Magazine::class)]
     #[JoinColumn(nullable: false, onDelete: 'CASCADE')]
     public ?Magazine $magazine;
