@@ -175,6 +175,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Visibil
     #[Column(type: 'boolean', nullable: false, options: ['default' => true])]
     public bool $notifyOnUserSignup = true;
     #[Column(type: 'boolean', nullable: false, options: ['default' => false])]
+    public bool $pushPromptDeclined = false;
+    #[Column(type: 'boolean', nullable: false, options: ['default' => false])]
     public bool $addMentionsEntries = false;
     #[Column(type: 'boolean', nullable: false, options: ['default' => true])]
     public bool $addMentionsPosts = true;

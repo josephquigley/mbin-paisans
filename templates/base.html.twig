@@ -85,6 +85,7 @@
         <main id="main"
               data-controller="lightbox timeago confirmation"
               class="{{ html_classes({'view-compact': COMPACT is same as V_TRUE}) }}">
+            {% include 'layout/_push_prompt.html.twig' %}
             {% block body %}{% endblock %}
         </main>
         {% if not mbin_private_instance() or (mbin_private_instance() and app.user is defined and app.user is not same as null) %}

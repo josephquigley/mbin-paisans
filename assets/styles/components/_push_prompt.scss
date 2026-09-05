@@ -1,0 +1,16 @@
+.push-prompt {
+  // Equal breathing room above and below, so the prompt sits as its own notice
+  // rather than reading as part of the navigation above it or the first post below.
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+
+  p {
+    margin-top: 0;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}
