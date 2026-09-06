@@ -92,7 +92,14 @@ class MagazineFollowController extends AbstractController
 
         try {
             $actor = $this->activityPubManager->findActorOrCreate($actorInput);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            // Throwable, not Exception. Resolving an actor reaches webfinger and
+            // a signed HTTP fetch, and those paths raise Error as well as
+            // Exception: an instance whose site row has no keypair makes
+            // ApHttpClient::getInstancePrivateKey() return null against a string
+            // return type, which is a TypeError. Error does not extend
+            // Exception, so catching Exception alone still returns a 500 to the
+            // moderator.
             $this->logger->warning(
                 '[MagazineFollowController::add] Failed to resolve actor "{actor}": {message}',
                 ['actor' => $actorInput, 'message' => $e->getMessage()]
