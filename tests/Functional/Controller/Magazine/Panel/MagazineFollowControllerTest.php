@@ -20,7 +20,7 @@ class MagazineFollowControllerTest extends WebTestCase
         $this->client->followRedirect();
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('#main .options__main a.active', 'Tags and follows');
+        $this->assertSelectorTextContains('#main .options__main a.active', 'Tags & Follows');
     }
 
     public function testUnauthorizedUserCannotLoadFollowsPanel(): void
