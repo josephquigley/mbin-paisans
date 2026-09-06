@@ -9,6 +9,7 @@ use App\Entity\Entry;
 use App\Entity\User;
 use App\Exception\EntityNotFoundException;
 use App\Exception\InstanceBannedException;
+use App\Exception\NoMagazineFoundException;
 use App\Exception\PostingRestrictedException;
 use App\Exception\TagBannedException;
 use App\Exception\UserBannedException;
@@ -44,6 +45,7 @@ class Page extends ActivityPubContent
      * @throws EntityNotFoundException    if the user could not be found or a sub exception occurred
      * @throws PostingRestrictedException if the target magazine has Magazine::postingRestrictedToMods = true and the actor is a magazine or a user that is not a mod
      * @throws InstanceBannedException    if the actor is from a banned instance
+     * @throws NoMagazineFoundException   if the object could not be routed to any magazine, including the 'random' fallback
      * @throws \Exception                 if there was an error
      */
     public function create(array $object, bool $stickyIt = false): Entry
@@ -82,6 +84,10 @@ class Page extends ActivityPubContent
             }
 
             $magazine = $this->activityPubManager->findOrCreateMagazineByToCCAndAudience($object);
+            if (null === $magazine) {
+                $this->logger->warning('Could not resolve a magazine for object {o} and no "random" magazine exists to fall back to, dropping it', ['o' => $object['id']]);
+                throw new NoMagazineFoundException(\sprintf('No magazine could be found or created for object "%s"', $object['id']));
+            }
             if ($magazine->isActorPostingRestricted($actor)) {
                 throw new PostingRestrictedException($magazine, $actor);
             }
