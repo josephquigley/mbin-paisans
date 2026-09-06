@@ -110,6 +110,31 @@ class FollowHandlerTest extends ActivityPubFunctionalTestCase
         self::assertEquals(0, \sizeof($prevPostedObjects) - \sizeof($postedObjects));
     }
 
+    public function testAFollowFromAReadOnlyInstanceIsRejected(): void
+    {
+        $settings = $this->settingsManager->getDto();
+        $settings->MBIN_USE_FEDERATION_ALLOW_LIST = true;
+        $this->settingsManager->save($settings);
+
+        $instance = $this->instanceRepository->getOrCreateInstance($this->remoteDomain);
+        $this->instanceManager->allowInstanceFederation($instance);
+        $this->instanceManager->markInstanceReadOnly($instance);
+
+        $this->bus->dispatch(new ActivityMessage(json_encode($this->userFollowMagazine)));
+
+        $followUser = $this->userRepository->findOneBy(['apProfileId' => $this->followUserApId]);
+        self::assertNotNull($followUser);
+        self::assertNull(
+            $this->magazineSubscriptionRepository->findOneBy(['user' => $followUser, 'magazine' => $this->localMagazine]),
+            'a follow from a read only instance must not record a subscription'
+        );
+
+        $postedObjects = $this->testingApHttpClient->getPostedObjects();
+        self::assertCount(1, $postedObjects);
+        self::assertEquals('Reject', $postedObjects[0]['payload']['type']);
+        self::assertEquals($this->userFollowMagazine['id'], $postedObjects[0]['payload']['object']['id']);
+    }
+
     public function testUserFollowMagazine(): void
     {
         $this->bus->dispatch(new ActivityMessage(json_encode($this->userFollowMagazine)));

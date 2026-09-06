@@ -14,6 +14,7 @@ use App\Service\ActivityPub\ApHttpClientInterface;
 use App\Service\ActivityPub\Wrapper\FollowResponseWrapper;
 use App\Service\ActivityPubManager;
 use App\Service\MagazineManager;
+use App\Service\OutboundFederationPolicy;
 use App\Service\UserManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -32,6 +33,7 @@ class FollowHandler extends MbinMessageHandler
         private readonly ApHttpClientInterface $client,
         private readonly LoggerInterface $logger,
         private readonly FollowResponseWrapper $followResponseWrapper,
+        private readonly OutboundFederationPolicy $policy,
         private readonly ActivityJsonBuilder $activityJsonBuilder,
     ) {
         parent::__construct($this->entityManager, $this->kernel);
@@ -55,6 +57,16 @@ class FollowHandler extends MbinMessageHandler
                 $object = $this->activityPubManager->findActorOrCreate($message->payload['object']);
                 // Check if object is not empty
                 if (!empty($object)) {
+                    if ($this->policy->isReadOnlyInstance($message->payload['actor'])) {
+                        // we read this instance but never send to it, so recording a follower
+                        // there would be a subscription we silently never deliver. The Reject
+                        // itself does reach them: handleFollowRequest posts directly rather
+                        // than through DeliverManager, which is deliberate.
+                        $this->handleFollowRequest($message->payload, $object, isReject: true);
+
+                        return;
+                    }
+
                     if ($object instanceof Magazine and null === $object->apId and 'random' === $object->name) {
                         $this->handleFollowRequest($message->payload, $object, isReject: true);
                     } else {
