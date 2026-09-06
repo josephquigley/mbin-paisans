@@ -11,6 +11,7 @@ use App\Message\ActivityPub\Outbox\FollowMessage;
 use App\Repository\MagazineFollowRepository;
 use App\Service\ActivityPubManager;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -24,6 +25,7 @@ class MagazineFollowController extends AbstractController
         private readonly MagazineFollowRepository $repository,
         private readonly ActivityPubManager $activityPubManager,
         private readonly MessageBusInterface $bus,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -92,9 +94,24 @@ class MagazineFollowController extends AbstractController
             return;
         }
 
-        $actor = $this->activityPubManager->findActorOrCreate($actorInput);
+        try {
+            $actor = $this->activityPubManager->findActorOrCreate($actorInput);
+        } catch (\Exception $e) {
+            $this->logger->warning(
+                '[MagazineFollowController::add] Failed to resolve actor "{actor}": {message}',
+                ['actor' => $actorInput, 'message' => $e->getMessage()]
+            );
+            $actor = null;
+        }
+
         if (null === $actor) {
             $this->addFlash('error', 'flash_magazine_follow_not_found_error');
+
+            return;
+        }
+
+        if (null === $actor->apId) {
+            $this->addFlash('error', 'flash_magazine_follow_local_actor_error');
 
             return;
         }
