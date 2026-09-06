@@ -15,6 +15,7 @@ use App\Service\ImageManagerInterface;
 use App\Service\IpResolver;
 use App\Service\Oidc\OidcAdminGroupPolicy;
 use App\Service\Oidc\OidcGroupClaims;
+use App\Service\Oidc\OidcMemberGroupPolicy;
 use App\Service\Oidc\OidcMetadataResolver;
 use App\Service\Oidc\OidcTokenValidator;
 use App\Service\SettingsManager;
@@ -92,6 +93,7 @@ class OidcAuthenticatorEmailLinkTest extends TestCase
             $client,
             $validator,
             new OidcAdminGroupPolicy(null, new OidcGroupClaims($groupClaimsResolver)),
+            new OidcMemberGroupPolicy(null, new OidcGroupClaims($groupClaimsResolver)),
             $entityManager,
             $this->createStub(UserManager::class),
             $this->createStub(ImageManagerInterface::class),

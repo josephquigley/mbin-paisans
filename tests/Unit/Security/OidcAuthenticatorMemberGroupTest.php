@@ -32,67 +32,67 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 use Symfony\Component\Routing\RouterInterface;
-use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
+use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
-use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 
 /**
- * Admin is granted only once the login has actually succeeded. The user
- * checker (banned, deleted, application pending) runs between loading the
- * user and onAuthenticationSuccess, so a refused login must leave no
- * ROLE_ADMIN behind in the database.
+ * The gate runs while the user is being loaded, which is the only point that
+ * covers both an existing account and one about to be provisioned. A refusal
+ * therefore has to happen before anything is written, not after.
  */
-class OidcAuthenticatorAdminGroupTest extends TestCase
+class OidcAuthenticatorMemberGroupTest extends TestCase
 {
-    public function testAMemberOfTheGroupBecomesAdminWhenTheLoginSucceeds(): void
+    public function testAMemberOfTheGroupIsAdmitted(): void
     {
         $user = $this->user();
-        [$authenticator, $request, $passport] = $this->authenticate($user, ['groups' => ['mbin-admins']]);
 
-        self::assertFalse($user->isAdmin(), 'loading the user must not grant admin yet');
-
-        $authenticator->onAuthenticationSuccess($request, $this->token($passport), 'main');
-
-        self::assertTrue($user->isAdmin());
+        self::assertSame($user, $this->loadUser($user, ['groups' => ['members']]));
     }
 
-    public function testARefusedLoginLeavesNoAdminBehind(): void
+    public function testSomeoneOutsideTheGroupIsRefused(): void
+    {
+        $this->expectException(CustomUserMessageAuthenticationException::class);
+
+        $this->loadUser($this->user(), ['groups' => ['other']]);
+    }
+
+    public function testEveryoneIsAdmittedWhenNoMemberGroupIsConfigured(): void
     {
         $user = $this->user();
-        $this->authenticate($user, ['groups' => ['mbin-admins']]);
 
-        // No onAuthenticationSuccess: the user checker threw.
-        self::assertFalse($user->isAdmin());
+        self::assertSame($user, $this->loadUser($user, ['groups' => ['other']], memberGroup: null));
     }
 
-    public function testSomeoneOutsideTheGroupIsNotPromoted(): void
-    {
-        $user = $this->user();
-        [$authenticator, $request, $passport] = $this->authenticate($user, ['groups' => ['members']]);
-
-        $authenticator->onAuthenticationSuccess($request, $this->token($passport), 'main');
-
-        self::assertFalse($user->isAdmin());
-    }
-
-    public function testNothingHappensWhenNoGroupIsConfigured(): void
-    {
-        $user = $this->user();
-        [$authenticator, $request, $passport] = $this->authenticate($user, ['groups' => ['mbin-admins']], adminGroup: null);
-
-        $authenticator->onAuthenticationSuccess($request, $this->token($passport), 'main');
-
-        self::assertFalse($user->isAdmin());
-    }
-
-    public function testAnExistingAdminIsLeftAlone(): void
+    /**
+     * The exemption the admin policy's own asymmetry argues for: a provider
+     * that stops emitting the claim must not lock the operators out of their
+     * own instance, on an SSO-only instance where there is no password login
+     * to fall back on.
+     */
+    public function testAnExistingAdminIsAdmittedWithoutTheGroup(): void
     {
         $user = $this->user()->setOrRemoveAdminRole();
-        [$authenticator, $request, $passport] = $this->authenticate($user, ['groups' => ['mbin-admins']]);
 
-        $authenticator->onAuthenticationSuccess($request, $this->token($passport), 'main');
+        self::assertSame($user, $this->loadUser($user, ['groups' => ['other']]));
+    }
 
-        self::assertTrue($user->isAdmin());
+    public function testAnExistingAdminIsAdmittedWhenTheClaimIsMissingEntirely(): void
+    {
+        $user = $this->user()->setOrRemoveAdminRole();
+
+        self::assertSame($user, $this->loadUser($user, []));
+    }
+
+    /**
+     * A first login has no linked account to read an admin flag from, so the
+     * exemption cannot apply to one. Provisioning is exactly what the gate is
+     * for, and refusing here is what stops an account being created at all.
+     */
+    public function testAnUnlinkedLoginIsRefusedWithoutTheGroup(): void
+    {
+        $this->expectException(CustomUserMessageAuthenticationException::class);
+
+        $this->loadUser(null, ['groups' => ['other']]);
     }
 
     private function user(): User
@@ -103,23 +103,12 @@ class OidcAuthenticatorAdminGroupTest extends TestCase
         return $user;
     }
 
-    private function token(Passport $passport): UsernamePasswordToken
-    {
-        /** @var User $user */
-        $user = $passport->getBadge(UserBadge::class)->getUser();
-
-        return new UsernamePasswordToken($user, 'main', $user->getRoles());
-    }
-
     /**
-     * Runs authenticate() and resolves the user the way the firewall would,
-     * for a member already linked by oauth_oidc_id.
+     * Runs authenticate() and resolves the user the way the firewall would.
      *
      * @param array<string, mixed> $idTokenClaims
-     *
-     * @return array{OidcAuthenticator, Request, Passport}
      */
-    private function authenticate(User $user, array $idTokenClaims, ?string $adminGroup = 'mbin-admins'): array
+    private function loadUser(?User $user, array $idTokenClaims, ?string $memberGroup = 'members'): ?object
     {
         $token = new AccessToken(['access_token' => 'access', 'id_token' => 'id-token']);
 
@@ -137,15 +126,18 @@ class OidcAuthenticatorAdminGroupTest extends TestCase
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('getRepository')->willReturn($byOidcId);
 
+        // Plain http, so an unsigned userinfo response can never stand in for
+        // the id_token claim in these cases.
         $resolver = new OidcMetadataResolver(
             new MockHttpClient([]),
             new ArrayAdapter(),
             'https://idp.test',
             'https://idp.test/authorize',
             'https://idp.test/token',
-            'https://idp.test/userinfo',
+            'http://idp:8080/userinfo',
             'https://idp.test/jwks',
         );
+        $groupClaims = new OidcGroupClaims($resolver);
 
         $router = $this->createStub(RouterInterface::class);
         $router->method('generate')->willReturn('/');
@@ -153,8 +145,8 @@ class OidcAuthenticatorAdminGroupTest extends TestCase
         $authenticator = new OidcAuthenticator(
             $client,
             $validator,
-            new OidcAdminGroupPolicy($adminGroup, new OidcGroupClaims($resolver)),
-            new OidcMemberGroupPolicy(null, new OidcGroupClaims($resolver)),
+            new OidcAdminGroupPolicy(null, $groupClaims),
+            new OidcMemberGroupPolicy($memberGroup, $groupClaims),
             $entityManager,
             $this->createStub(UserManager::class),
             $this->createStub(ImageManagerInterface::class),
@@ -171,9 +163,6 @@ class OidcAuthenticatorAdminGroupTest extends TestCase
         $request = new Request();
         $request->setSession(new Session(new MockArraySessionStorage()));
 
-        $passport = $authenticator->authenticate($request);
-        $passport->getBadge(UserBadge::class)->getUser();
-
-        return [$authenticator, $request, $passport];
+        return $authenticator->authenticate($request)->getBadge(UserBadge::class)->getUser();
     }
 }

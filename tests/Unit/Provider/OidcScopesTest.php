@@ -27,7 +27,22 @@ class OidcScopesTest extends TestCase
         self::assertStringNotContainsString('groups', $this->authorizationUrl('   '));
     }
 
-    private function authorizationUrl(?string $adminGroup): string
+    /**
+     * Either reader is reason enough. Miss this and the member gate refuses
+     * every login on an instance that configures only the member group,
+     * because the claim it reads was never requested.
+     */
+    public function testTheGroupsScopeIsRequestedWhenOnlyAMemberGroupIsConfigured(): void
+    {
+        self::assertStringContainsString('groups', $this->authorizationUrl(null, 'members'));
+    }
+
+    public function testAWhitespaceMemberGroupDoesNotRequestTheScope(): void
+    {
+        self::assertStringNotContainsString('groups', $this->authorizationUrl(null, '   '));
+    }
+
+    private function authorizationUrl(?string $adminGroup, ?string $memberGroup = null): string
     {
         $client = new MockHttpClient([]);
 
@@ -46,6 +61,7 @@ class OidcScopesTest extends TestCase
             ),
             'username_claim' => 'preferred_username',
             'admin_group' => $adminGroup,
+            'member_group' => $memberGroup,
         ]);
 
         return $provider->getAuthorizationUrl();

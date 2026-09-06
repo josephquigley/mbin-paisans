@@ -278,6 +278,44 @@ clear the stored identifiers first (see "Changing the issuer" below), because
 a colliding subject at the new provider would otherwise inherit not just an
 account but, if it is in the group, admin.
 
+#### Letting your provider decide who may log in at all
+
+By default it already does, in the only way that matters: Mbin creates an
+account for anybody your provider issues a token for. If your provider can
+restrict the client to a group, that is the better gate, because it refuses the
+person before Mbin ever sees them, and nothing here is needed.
+
+`OAUTH_OIDC_MEMBER_GROUP` is a second lock inside Mbin, for what a provider-side
+restriction cannot cover: one removed by accident, a second client pointed at
+the same instance, or a provider with no such feature.
+
+```ini
+OAUTH_OIDC_MEMBER_GROUP=members
+```
+
+Mbin then requests the `groups` scope and refuses any login whose group list
+does not contain that name, before an account is created or an existing one is
+returned. The refused person is told only that authentication failed; the reason
+is logged. The claim is read exactly as `OAUTH_OIDC_ADMIN_GROUP` reads it
+(verified `id_token` first, userinfo only over HTTPS), and matching is exact and
+case sensitive.
+
+**It fails closed, and that is the opposite of the admin group.** A login whose
+group list cannot be read is refused, where an unreadable list merely means "no
+promotion" for the admin group. So a provider that stops sending the claim, or
+stops granting the `groups` scope, locks out every member at once.
+
+**Users who are already Mbin administrators are exempt** for exactly that
+reason: on an instance with `MBIN_SSO_ONLY_MODE` there is no password login to
+recover through, and the exemption is the only way back in. It reads the linked
+Mbin account, so it cannot apply to somebody's first login: an administrator
+whose Mbin account has never been linked to this provider is refused like anyone
+else, and the fix is to put them in the group.
+
+The gate does not remove anything from an account it refuses. Somebody dropped
+from the group keeps their posts, their username and their admin flag if they
+had one; they simply cannot log in.
+
 #### When discovery is not enough
 
 Some providers publish a discovery document that names addresses your instance
