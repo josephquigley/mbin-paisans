@@ -32,11 +32,17 @@ class MagazineFollowRepository extends ServiceEntityRepository
             return null;
         }
 
+        // Nothing stops two magazines from following the same actor, since the
+        // unique indexes are scoped per magazine. When that happens, the first
+        // magazine to have claimed the actor wins, so the ordering below must
+        // be stable.
         $result = $this->createQueryBuilder('mf')
             ->leftJoin('mf.followingUser', 'u')
             ->leftJoin('mf.followingMagazine', 'm')
             ->where('u.apProfileId = :url OR m.apProfileId = :url')
             ->setParameter('url', $actorUrl)
+            ->orderBy('mf.createdAt', 'ASC')
+            ->addOrderBy('mf.id', 'ASC')
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
