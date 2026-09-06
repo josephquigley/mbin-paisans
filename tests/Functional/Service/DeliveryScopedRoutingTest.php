@@ -7,7 +7,6 @@ namespace App\Tests\Functional\Service;
 use App\Entity\MagazineFollow;
 use App\Entity\User;
 use App\Enum\MagazineFollowKind;
-use App\Service\ActivityPubManager;
 use App\Tests\WebTestCase;
 use PHPUnit\Framework\Attributes\Group;
 
