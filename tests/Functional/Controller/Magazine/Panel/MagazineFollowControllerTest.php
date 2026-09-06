@@ -66,7 +66,7 @@ class MagazineFollowControllerTest extends WebTestCase
         $this->client->request('GET', '/m/acme/panel/tags');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('#main .follows-table', 'Posts the actor announces');
+        $this->assertSelectorTextContains('#main .follows-table', 'Boosts, Re-Blogs & Announcements');
     }
 
     public function testRemovingFollowFromAnotherMagazineIsRefused(): void
