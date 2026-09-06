@@ -49,7 +49,7 @@ class MagazineFollowControllerTest extends WebTestCase
         $crawler = $this->client->followRedirect();
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('.alert__danger', 'That actor could not be found.');
+        $this->assertSelectorTextContains('.alert__danger', "That doesn't look like an actor.");
     }
 
     public function testRemovingFollowFromAnotherMagazineIsRefused(): void
