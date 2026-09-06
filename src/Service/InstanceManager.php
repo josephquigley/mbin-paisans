@@ -97,6 +97,34 @@ readonly class InstanceManager
             throw new \LogicException('Cannot deny instance federation when not using an allow list');
         }
         $instance->isExplicitlyAllowed = false;
+        // clear the read only marking too, so allowing the instance again later does not
+        // silently restore a state the admin set in a different context
+        $instance->isReadOnly = false;
+
+        $this->entityManager->flush();
+    }
+
+    public function markInstanceReadOnly(Instance $instance): void
+    {
+        if (!$this->settingsManager->getUseAllowList()) {
+            throw new \LogicException('Cannot mark an instance read only when not using an allow list');
+        }
+        if (!$instance->isExplicitlyAllowed) {
+            throw new \LogicException('Cannot mark an instance read only when it is not allowed to federate');
+        }
+        $instance->isReadOnly = true;
+
+        $this->entityManager->flush();
+    }
+
+    public function markInstanceReadWrite(Instance $instance): void
+    {
+        if (!$this->settingsManager->getUseAllowList()) {
+            throw new \LogicException('Cannot mark an instance read write when not using an allow list');
+        }
+        // deliberately no isExplicitlyAllowed guard: clearing the flag has to stay possible
+        // on an instance whose allow was withdrawn while it was marked read only
+        $instance->isReadOnly = false;
 
         $this->entityManager->flush();
     }
