@@ -9,15 +9,18 @@ use App\Tests\WebTestCase;
 
 class MagazineFollowControllerTest extends WebTestCase
 {
-    public function testModCanLoadFollowsPanel(): void
+    public function testFollowsPanelRedirectsToTagsPanel(): void
     {
         $this->client->loginUser($this->getUserByUsername('JohnDoe'));
         $this->getMagazineByName('acme');
 
         $this->client->request('GET', '/m/acme/panel/follows');
 
+        $this->assertResponseRedirects('/m/acme/panel/tags');
+        $this->client->followRedirect();
+
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('#main .options__main a.active', 'Follows');
+        $this->assertSelectorTextContains('#main .options__main a.active', 'Tags and follows');
     }
 
     public function testUnauthorizedUserCannotLoadFollowsPanel(): void
@@ -35,14 +38,14 @@ class MagazineFollowControllerTest extends WebTestCase
         $this->client->loginUser($this->getUserByUsername('JohnDoe'));
         $this->getMagazineByName('acme');
 
-        $crawler = $this->client->request('GET', '/m/acme/panel/follows');
+        $crawler = $this->client->request('GET', '/m/acme/panel/tags');
         $this->client->submit(
             $crawler->filter('#main form[name=follow]')->selectButton('Add follow')->form([
                 'actor' => 'hello',
             ])
         );
 
-        $this->assertResponseRedirects('/m/acme/panel/follows');
+        $this->assertResponseRedirects('/m/acme/panel/tags');
         $crawler = $this->client->followRedirect();
 
         $this->assertResponseIsSuccessful();
@@ -61,7 +64,7 @@ class MagazineFollowControllerTest extends WebTestCase
 
         // Load magazine B's own panel first to get a genuine CSRF token for
         // this follow row, minted in the same session as the request below.
-        $crawler = $this->client->request('GET', '/m/other/panel/follows');
+        $crawler = $this->client->request('GET', '/m/other/panel/tags');
         $token = $crawler->filter('#main .follows-table input[name=token]')->attr('value');
 
         $this->client->request(
@@ -83,14 +86,14 @@ class MagazineFollowControllerTest extends WebTestCase
         $magazine->postingRestrictedToMods = true;
         $this->entityManager->flush();
 
-        $crawler = $this->client->request('GET', '/m/acme/panel/follows');
+        $crawler = $this->client->request('GET', '/m/acme/panel/tags');
         $this->client->submit(
             $crawler->filter('#main form[name=follow]')->selectButton('Add follow')->form([
                 'actor' => '@someone@remote.tld',
             ])
         );
 
-        $this->assertResponseRedirects('/m/acme/panel/follows');
+        $this->assertResponseRedirects('/m/acme/panel/tags');
         $crawler = $this->client->followRedirect();
 
         $this->assertResponseIsSuccessful();
