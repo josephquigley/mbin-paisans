@@ -39,10 +39,13 @@ class Oidc extends AbstractProvider
 
         // The groups scope is only asked for when something actually reads a
         // group. Requesting a scope an instance has no use for would show the
-        // person a consent screen listing access nobody needs.
-        $this->requestGroups = '' !== trim((string) ($options['admin_group'] ?? ''));
+        // person a consent screen listing access nobody needs. Either reader
+        // is reason enough, and the member gate in particular refuses every
+        // login when the claim it reads was never requested.
+        $this->requestGroups = '' !== trim((string) ($options['admin_group'] ?? ''))
+            || '' !== trim((string) ($options['member_group'] ?? ''));
 
-        unset($options['metadata_resolver'], $options['username_claim'], $options['admin_group']);
+        unset($options['metadata_resolver'], $options['username_claim'], $options['admin_group'], $options['member_group']);
 
         parent::__construct($options, $collaborators);
     }
