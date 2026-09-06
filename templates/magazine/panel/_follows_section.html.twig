@@ -1,3 +1,5 @@
+{%- set FOLLOW_ACCEPTED = constant('App\\Entity\\MagazineFollow::STATUS_ACCEPTED') -%}
+{%- set FOLLOW_REJECTED = constant('App\\Entity\\MagazineFollow::STATUS_REJECTED') -%}
 {% include 'layout/_flash.html.twig' %}
 {% if follows|length %}
     <div id="content" class="section follows-table table-responsive">
@@ -21,7 +23,10 @@
                         {% endif %}
                     </td>
                     <td>
-                        <span class="badge">{{ follow.status|trans }}</span>
+                        <span class="{{ html_classes('badge', {
+                            success: follow.status is same as(FOLLOW_ACCEPTED),
+                            danger: follow.status is same as(FOLLOW_REJECTED)
+                        }) }}">{{ follow.status|trans }}</span>
                     </td>
                     <td>{{ component('date', {date: follow.createdAt}) }}</td>
                     <td>
