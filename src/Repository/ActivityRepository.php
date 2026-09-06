@@ -126,11 +126,11 @@ class ActivityRepository extends ServiceEntityRepository
             $qb->andWhere('a.objectMessage = :message')
                 ->setParameter('message', $object);
         } elseif ($object instanceof User) {
-            $qb->andWhere('a.objectUser = :user')
-                ->setParameter('user', $object);
+            $qb->andWhere('a.objectUser = :objectUser')
+                ->setParameter('objectUser', $object);
         } elseif ($object instanceof Magazine) {
-            $qb->andWhere('a.objectMagazine = :magazine')
-                ->setParameter('magazine', $object);
+            $qb->andWhere('a.objectMagazine = :objectMagazine')
+                ->setParameter('objectMagazine', $object);
         } elseif ($object instanceof MagazineBan) {
             $qb->andWhere('a.objectMagazineBan = :magazineBan')
                 ->setParameter('magazineBan', $object);
