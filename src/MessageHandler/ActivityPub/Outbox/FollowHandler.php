@@ -55,7 +55,11 @@ class FollowHandler extends MbinMessageHandler
             throw new \LogicException();
         }
 
-        $follower = $this->userRepository->find($message->followerId);
+        if ($message->followerIsMagazine) {
+            $follower = $this->magazineRepository->find($message->followerId);
+        } else {
+            $follower = $this->userRepository->find($message->followerId);
+        }
         if ($message->magazine) {
             $following = $this->magazineRepository->find($message->followingId);
         } else {

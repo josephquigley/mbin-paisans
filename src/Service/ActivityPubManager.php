@@ -36,6 +36,7 @@ use App\Repository\MagazineRepository;
 use App\Repository\UserRepository;
 use App\Service\ActivityPub\ApHttpClientInterface;
 use App\Service\ActivityPub\ApObjectExtractor;
+use App\Service\ActivityPub\MagazineFollowResolver;
 use App\Service\ActivityPub\Webfinger\WebFinger;
 use App\Service\ActivityPub\Webfinger\WebFingerFactory;
 use App\Utils\UrlUtils;
@@ -77,6 +78,7 @@ class ActivityPubManager
         private readonly RemoteInstanceManager $remoteInstanceManager,
         private readonly InstanceRepository $instanceRepository,
         private readonly CacheInterface $cache,
+        private readonly MagazineFollowResolver $magazineFollowResolver,
     ) {
     }
 
@@ -1045,11 +1047,11 @@ class ActivityPubManager
             }
         }
 
-        if (null === $magazine) {
-            $magazine = $this->magazineRepository->findOneByName('random');
-        }
+        $actorUrl = null === $magazine && isset($object['attributedTo'])
+            ? $this->getSingleActorFromAttributedTo($object['attributedTo'])
+            : null;
 
-        return $magazine;
+        return $this->magazineFollowResolver->resolve($magazine, $actorUrl);
     }
 
     public static function getReceivers(array $object): array

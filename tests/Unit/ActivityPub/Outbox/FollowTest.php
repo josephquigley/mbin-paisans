@@ -46,4 +46,11 @@ class FollowTest extends ActivityPubTestCase
 
         $this->assertMatchesSnapshot($json, new ActivityPubJsonDriver());
     }
+
+    public function testMagazineFollowsUser(): void
+    {
+        $json = $this->activityJsonBuilder->buildActivityJson($this->getMagazineFollowsUserActivity());
+
+        $this->assertMatchesSnapshot($json, new ActivityPubJsonDriver());
+    }
 }

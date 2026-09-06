@@ -15,6 +15,7 @@ use App\Repository\InstanceRepository;
 use App\Repository\MagazineRepository;
 use App\Repository\UserRepository;
 use App\Service\ActivityPub\ApHttpClientInterface;
+use App\Service\ActivityPub\MagazineFollowResolver;
 use App\Service\ActivityPub\Webfinger\WebFingerFactory;
 use App\Service\ActivityPubManager;
 use App\Service\EntryManager;
@@ -71,6 +72,7 @@ class ActivityPubManagerHandleImagesTest extends TestCase
             $this->createMock(RemoteInstanceManager::class),
             $this->createMock(InstanceRepository::class),
             $this->createMock(CacheInterface::class),
+            $this->createMock(MagazineFollowResolver::class),
         );
     }
 

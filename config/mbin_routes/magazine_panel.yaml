@@ -75,6 +75,16 @@ magazine_panel_tags:
   path: /m/{name}/panel/tags
   methods: [ GET, POST ]
 
+magazine_panel_follows:
+  controller: App\Controller\Magazine\Panel\MagazineFollowController::follows
+  path: /m/{name}/panel/follows
+  methods: [ GET, POST ]
+
+magazine_panel_follow_remove:
+  controller: App\Controller\Magazine\Panel\MagazineFollowController::remove
+  path: /m/{magazine_name}/panel/follows/{follow_id}/remove
+  methods: [ POST ]
+
 magazine_panel_trash:
   controller: App\Controller\Magazine\Panel\MagazineTrashController
   path: /m/{name}/panel/trash
