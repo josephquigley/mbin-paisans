@@ -301,6 +301,11 @@ services:
                 - '%env(REDIS_HOST)%'
                 - '%env(int:REDIS_PORT)%'
 
-            # uncomment the following if your Redis server requires a password
-            #- auth:
-            #    - '%env(REDIS_PASSWORD)%'
+            # Authenticate. Upstream ships this commented out, which works only
+            # against a Redis that allows unauthenticated clients. Every
+            # deployment of this fork runs Valkey with requirepass set, so
+            # without this every request that touches a session dies with
+            # "NOAUTH Authentication required." from RedisSessionHandler —
+            # which is a 500 on every page, not a degraded feature.
+            - auth:
+                - '%env(REDIS_PASSWORD)%'
