@@ -11,6 +11,7 @@ use App\Entity\PostComment;
 use App\Exception\EntityNotFoundException;
 use App\Exception\EntryLockedException;
 use App\Exception\InstanceBannedException;
+use App\Exception\NoMagazineFoundException;
 use App\Exception\PostLockedException;
 use App\Exception\TagBannedException;
 use App\Exception\UserBannedException;
@@ -161,6 +162,8 @@ class ChainActivityHandler extends MbinMessageHandler
             $this->logger->error('[ChainActivityHandler::retrieveObject] The post in which this comment should be created, is locked: {url}', ['url' => $apUrl]);
         } catch (EntityNotFoundException $e) {
             $this->logger->error('[ChainActivityHandler::retrieveObject] There was an exception while getting {url}: {ex} - {m}. {o}', ['url' => $apUrl, 'ex' => \get_class($e), 'm' => $e->getMessage(), 'o' => $e]);
+        } catch (NoMagazineFoundException $e) {
+            $this->logger->warning('[ChainActivityHandler::retrieveObject] No magazine could be resolved for {url}: {m}', ['url' => $apUrl, 'm' => $e->getMessage()]);
         }
 
         return null;

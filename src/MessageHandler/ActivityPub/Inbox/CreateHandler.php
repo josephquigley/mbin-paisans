@@ -13,6 +13,7 @@ use App\Exception\EntryLockedException;
 use App\Exception\InstanceBannedException;
 use App\Exception\InvalidApPostException;
 use App\Exception\InvalidWebfingerException;
+use App\Exception\NoMagazineFoundException;
 use App\Exception\PostingRestrictedException;
 use App\Exception\PostLockedException;
 use App\Exception\TagBannedException;
@@ -120,6 +121,8 @@ class CreateHandler extends MbinMessageHandler
             $this->logger->info('[CreateHandler::doWork] Did not create the message, because the user is blocked by one of the receivers');
         } catch (EntryLockedException|PostLockedException) {
             $this->logger->info('[CreateHandler::doWork] Did not create the comment, because the entry/post is locked');
+        } catch (NoMagazineFoundException $e) {
+            $this->logger->warning('[CreateHandler::doWork] Did not create the post, because no magazine could be resolved for it: {m}', ['m' => $e->getMessage()]);
         }
     }
 
