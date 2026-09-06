@@ -25,6 +25,24 @@ class AdminFederationControllerTest extends WebTestCase
         );
     }
 
+    public function testMarkInstanceReadWriteWorksWithoutTheAllowList(): void
+    {
+        $settings = $this->settingsManager->getDto();
+        $settings->MBIN_USE_FEDERATION_ALLOW_LIST = true;
+        $this->settingsManager->save($settings);
+
+        $instance = $this->instanceRepository->getOrCreateInstance('readonly.example.com');
+        $this->instanceManager->allowInstanceFederation($instance);
+        $this->instanceManager->markInstanceReadOnly($instance);
+
+        $settings->MBIN_USE_FEDERATION_ALLOW_LIST = false;
+        $this->settingsManager->save($settings);
+
+        // clearing must not be stranded by the allow list being turned off afterwards
+        $this->instanceManager->markInstanceReadWrite($instance);
+        self::assertFalse($instance->isReadOnly);
+    }
+
     public function testMarkInstanceReadOnlyRequiresTheAllowList(): void
     {
         $settings = $this->settingsManager->getDto();
