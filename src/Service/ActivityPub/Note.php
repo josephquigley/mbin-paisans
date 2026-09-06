@@ -105,7 +105,7 @@ class Note extends ActivityPubContent
             }
         }
 
-        return $this->createPost($object, $stickyIt);
+        return $this->createPost($object, $stickyIt, $deliveredBy, $activityType);
     }
 
     /**
@@ -178,7 +178,7 @@ class Note extends ActivityPubContent
      * @throws UserBannedException
      * @throws NoMagazineFoundException if the object could not be routed to any magazine, including the 'random' fallback
      */
-    private function createPost(array $object, bool $stickyIt = false): Post
+    private function createPost(array $object, bool $stickyIt = false, ?string $deliveredBy = null, ?string $activityType = null): Post
     {
         $dto = new PostDto();
         $dto->magazine = $this->activityPubManager->findOrCreateMagazineByToCCAndAudience($object, $deliveredBy, $activityType);

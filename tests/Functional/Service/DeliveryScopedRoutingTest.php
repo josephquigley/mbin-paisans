@@ -7,6 +7,7 @@ namespace App\Tests\Functional\Service;
 use App\Entity\MagazineFollow;
 use App\Entity\User;
 use App\Enum\MagazineFollowKind;
+use App\Service\ActivityPub\Note;
 use App\Tests\WebTestCase;
 use PHPUnit\Framework\Attributes\Group;
 
@@ -66,6 +67,35 @@ class DeliveryScopedRoutingTest extends WebTestCase
 
         self::assertNotNull($resolved, 'the announced post should have resolved to a magazine');
         self::assertSame($magazine->getId(), $resolved->getId());
+    }
+
+    public function testAnUntitledPostAnnouncedByAFollowedInstanceActorBecomesAMicroblogPost(): void
+    {
+        // A WriteFreely post with no title arrives as a Note, which Note::createPost()
+        // handles. That is a different method from Note::create(), so the delivering
+        // actor has to be threaded into it as well.
+        $magazine = $this->getMagazineByName('blog');
+        $instanceActor = $this->remoteActor('instanceactor', self::INSTANCE_ACTOR, 'Application');
+        $this->remoteActor('quigs', self::BLOG_ACTOR, 'Person');
+
+        $follow = new MagazineFollow($magazine, $instanceActor);
+        $follow->status = MagazineFollow::STATUS_ACCEPTED;
+        $this->entityManager->persist($follow);
+        $this->entityManager->flush();
+
+        $note = [
+            'id' => 'https://blog.example.com/api/posts/sbmvvvjz9j',
+            'type' => 'Note',
+            'attributedTo' => self::BLOG_ACTOR,
+            'content' => 'a single line with no title',
+            'to' => ['https://www.w3.org/ns/activitystreams#Public'],
+            'cc' => [],
+            'published' => '2026-09-06T23:10:00Z',
+        ];
+
+        $post = self::getContainer()->get(Note::class)->create($note, deliveredBy: self::INSTANCE_ACTOR, activityType: 'Announce');
+
+        self::assertSame($magazine->getId(), $post->magazine->getId());
     }
 
     public function testAFollowOnAnApplicationActorDefaultsToCarryingAnnounces(): void
