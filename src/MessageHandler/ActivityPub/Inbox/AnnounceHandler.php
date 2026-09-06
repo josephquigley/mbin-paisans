@@ -48,7 +48,7 @@ class AnnounceHandler extends MbinMessageHandler
                 $this->logger->info('[AnnounceHandler::doWork] Got an adjusted url: {url}, using that instead of {old}', ['url' => $adjustedUrl, 'old' => $message->payload['object']['id'] ?? $message->payload['object']]);
                 $message->payload['object'] = $adjustedUrl;
             }
-            $this->bus->dispatch(new ChainActivityMessage([$object], announce: $message->payload));
+            $this->bus->dispatch(new ChainActivityMessage([$object], announce: $message->payload, deliveredBy: $message->payload['actor'] ?? null, deliveredKind: 'Announce'));
         };
 
         if ('Announce' === $message->payload['type']) {

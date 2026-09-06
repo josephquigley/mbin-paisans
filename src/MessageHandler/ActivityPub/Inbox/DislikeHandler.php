@@ -64,7 +64,7 @@ class DislikeHandler extends MbinMessageHandler
                 $this->logger->info('[DislikeHandler::doWork] got an adjusted url: {url}, using that instead of {old}', ['url' => $adjustedUrl, 'old' => $message->payload['object']['id'] ?? $message->payload['object']]);
                 $message->payload['object'] = $adjustedUrl;
             }
-            $this->bus->dispatch(new ChainActivityMessage([$object], dislike: $message->payload));
+            $this->bus->dispatch(new ChainActivityMessage([$object], dislike: $message->payload, deliveredBy: $message->payload['actor'] ?? null, deliveredKind: 'Create'));
         };
 
         if ('Dislike' === $message->payload['type']) {

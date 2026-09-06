@@ -11,10 +11,19 @@ use PHPUnit\Framework\TestCase;
 
 class MagazineFollowTest extends TestCase
 {
+    /**
+     * A real User, not a mock: MagazineFollow reads the followed actor's type to pick
+     * the kind the follow carries, and a mock leaves that typed property uninitialized.
+     */
+    private function user(string $type = 'Person'): User
+    {
+        return new User('actor@example.com', 'actor', 'secret', $type);
+    }
+
     public function testFollowingAUserStoresItOnTheUserSide(): void
     {
         $magazine = $this->createMock(Magazine::class);
-        $user = $this->createMock(User::class);
+        $user = $this->user();
 
         $follow = new MagazineFollow($magazine, $user);
 
@@ -37,7 +46,7 @@ class MagazineFollowTest extends TestCase
 
     public function testANewFollowStartsPending(): void
     {
-        $follow = new MagazineFollow($this->createMock(Magazine::class), $this->createMock(User::class));
+        $follow = new MagazineFollow($this->createMock(Magazine::class), $this->user());
 
         self::assertSame(MagazineFollow::STATUS_PENDING, $follow->status);
     }

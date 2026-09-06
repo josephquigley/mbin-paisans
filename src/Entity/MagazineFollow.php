@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Entity\Traits\CreatedAtTrait;
+use App\Enum\MagazineFollowKind;
 use App\Repository\MagazineFollowRepository;
 use Doctrine\ORM\Mapping\Column;
 use Doctrine\ORM\Mapping\Entity;
@@ -31,6 +32,11 @@ class MagazineFollow
 
     #[Column(type: 'string', nullable: false, options: ['default' => self::STATUS_PENDING])]
     public string $status = self::STATUS_PENDING;
+
+    // What this follow carries. Defaulted from the followed actor's type when the
+    // follow is made, and changeable by a moderator afterwards.
+    #[Column(type: 'string', nullable: false, options: ['default' => MagazineFollowKind::Both->value], enumType: MagazineFollowKind::class)]
+    public MagazineFollowKind $kind = MagazineFollowKind::Both;
 
     #[ManyToOne(targetEntity: Magazine::class)]
     #[JoinColumn(nullable: false, onDelete: 'CASCADE')]
@@ -62,6 +68,7 @@ class MagazineFollow
         } else {
             $this->followingMagazine = $following;
         }
+        $this->kind = MagazineFollowKind::defaultFor($following);
     }
 
     public function getFollowingActor(): User|Magazine

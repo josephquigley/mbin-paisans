@@ -1029,7 +1029,7 @@ class ActivityPubManager
         return null;
     }
 
-    public function findOrCreateMagazineByToCCAndAudience(array $object): ?Magazine
+    public function findOrCreateMagazineByToCCAndAudience(array $object, ?string $deliveredBy = null, ?string $activityType = null): ?Magazine
     {
         $potentialGroups = self::getReceivers($object);
         $magazine = $this->magazineRepository->findByApGroupProfileId($potentialGroups);
@@ -1047,11 +1047,11 @@ class ActivityPubManager
             }
         }
 
-        $actorUrl = null === $magazine && isset($object['attributedTo'])
+        $actorUrl = isset($object['attributedTo'])
             ? $this->getSingleActorFromAttributedTo($object['attributedTo'])
             : null;
 
-        return $this->magazineFollowResolver->resolve($magazine, $actorUrl);
+        return $this->magazineFollowResolver->resolve($magazine, $deliveredBy, $actorUrl, $activityType);
     }
 
     public static function getReceivers(array $object): array
