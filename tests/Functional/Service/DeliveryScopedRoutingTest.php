@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional\Service;
 
+use App\Entity\Contracts\VisibilityInterface;
 use App\Entity\MagazineFollow;
 use App\Entity\User;
 use App\Enum\MagazineFollowKind;
@@ -41,6 +42,7 @@ class DeliveryScopedRoutingTest extends WebTestCase
         $user->apId = $username.'@blog.example.com';
         $user->apInboxUrl = $profileId.'/inbox';
         $user->apPublicUrl = $profileId;
+        $user->apFollowersUrl = $profileId.'/followers';
         $this->entityManager->persist($user);
         $this->entityManager->flush();
 
@@ -96,6 +98,38 @@ class DeliveryScopedRoutingTest extends WebTestCase
         $post = self::getContainer()->get(Note::class)->create($note, deliveredBy: self::INSTANCE_ACTOR, activityType: 'Announce');
 
         self::assertSame($magazine->getId(), $post->magazine->getId());
+    }
+
+    public function testAFollowersOnlyPostStaysPrivateEvenWhenAMagazineFollowsTheSender(): void
+    {
+        // Founder decision, 2026-09-06: an unlisted blog's posts are followers-only on
+        // the wire, and a magazine follow must not widen that audience. Routing decides
+        // WHICH magazine an object belongs to. It says nothing about WHO may see it, and
+        // this test exists so that stays true.
+        $magazine = $this->getMagazineByName('blog');
+        $blogActor = $this->remoteActor('unlisted', self::BLOG_ACTOR, 'Person');
+
+        $follow = new MagazineFollow($magazine, $blogActor);
+        $follow->status = MagazineFollow::STATUS_ACCEPTED;
+        $this->entityManager->persist($follow);
+        $this->entityManager->flush();
+
+        $followersOnly = [
+            'id' => 'https://blog.example.com/api/posts/unlisted1',
+            'type' => 'Note',
+            'attributedTo' => self::BLOG_ACTOR,
+            'content' => 'a post from an unlisted blog',
+            // exactly what WriteFreely puts on the wire for an unlisted collection:
+            // the followers collection in `to`, and the Public collection in neither field
+            'to' => [self::BLOG_ACTOR.'/followers'],
+            'cc' => [],
+            'published' => '2026-09-06T23:20:00Z',
+        ];
+
+        $post = self::getContainer()->get(Note::class)->create($followersOnly, deliveredBy: self::BLOG_ACTOR, activityType: 'Create');
+
+        self::assertSame($magazine->getId(), $post->magazine->getId(), 'it should still be routed to the magazine');
+        self::assertSame(VisibilityInterface::VISIBILITY_PRIVATE, $post->visibility, 'a followers-only post must stay private');
     }
 
     public function testAFollowOnAnApplicationActorDefaultsToCarryingAnnounces(): void
