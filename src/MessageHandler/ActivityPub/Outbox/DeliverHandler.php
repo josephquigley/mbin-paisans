@@ -14,6 +14,7 @@ use App\MessageHandler\MbinMessageHandler;
 use App\Repository\InstanceRepository;
 use App\Service\ActivityPub\ApHttpClientInterface;
 use App\Service\ActivityPubManager;
+use App\Service\OutboundFederationPolicy;
 use App\Service\SettingsManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Cache\InvalidArgumentException;
@@ -35,6 +36,7 @@ class DeliverHandler extends MbinMessageHandler
         private readonly ApHttpClientInterface $client,
         private readonly ActivityPubManager $activityPubManager,
         private readonly SettingsManager $settingsManager,
+        private readonly OutboundFederationPolicy $policy,
         private readonly LoggerInterface $logger,
         private readonly InstanceRepository $instanceRepository,
     ) {
@@ -101,6 +103,13 @@ class DeliverHandler extends MbinMessageHandler
     {
         if (!($message instanceof DeliverMessage)) {
             throw new \LogicException();
+        }
+
+        if (!$this->policy->mayDeliver($message->apInboxUrl, $message->payload)) {
+            // the backstop for the call sites that dispatch a DeliverMessage without going
+            // through DeliverManager, and for messages already queued when the instance was
+            // marked read only. Checked before the instance row is touched at all.
+            return;
         }
 
         $instance = $this->instanceRepository->getOrCreateInstance(parse_url($message->apInboxUrl, PHP_URL_HOST));
