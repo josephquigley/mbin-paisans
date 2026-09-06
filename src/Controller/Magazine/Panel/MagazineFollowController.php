@@ -64,6 +64,10 @@ class MagazineFollowController extends AbstractController
     ): Response {
         $this->validateCsrf('magazine_follow_remove', $request->getPayload()->get('token'));
 
+        if ($follow->magazine !== $magazine) {
+            throw $this->createAccessDeniedException();
+        }
+
         $actor = $follow->getFollowingActor();
 
         $this->bus->dispatch(new FollowMessage(
