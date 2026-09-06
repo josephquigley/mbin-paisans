@@ -57,6 +57,16 @@ admin_federation_deny_instance:
     path: /admin/federation/deny
     methods: [GET, POST]
 
+admin_federation_read_only_instance:
+    controller: App\Controller\Admin\AdminFederationController::markInstanceReadOnly
+    path: /admin/federation/read-only
+    methods: [GET]
+
+admin_federation_read_write_instance:
+    controller: App\Controller\Admin\AdminFederationController::markInstanceReadWrite
+    path: /admin/federation/read-write
+    methods: [GET]
+
 admin_federation_block_instance:
     controller: App\Controller\Admin\AdminFederationController::blockInstanceGlobally
     path: /admin/federation/block

@@ -1084,6 +1084,14 @@ delete_magazine_banner: Delete magazine banner
 flash_magazine_theme_banner_detached_success: Magazine banner deleted
   successfully
 federation_uses_allowlist: Use allowlist for federation
+federation_read_only: Read only
+federation_mark_read_only: Mark read only
+federation_mark_read_write: Allow sending to this instance
+federation_read_only_help: Content from this instance is received as normal, but
+  nothing except the follow handshake and updates of our own profiles is ever sent
+  to it. Replies, boosts, favourites and reports made here are not delivered there.
+  This does not stop that instance from seeing a reply relayed by some other
+  instance we federate with, and it does not apply to activities already delivered.
 defederating_instance: Defederating instance %i
 their_user_follows: Amount of users from their instance following users on our
   instance

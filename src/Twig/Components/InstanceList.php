@@ -27,5 +27,7 @@ class InstanceList
 
     public bool $showAllowButton = false;
 
+    public bool $showReadOnlyButton = false;
+
     public bool $showAdminBlockButton = false;
 }

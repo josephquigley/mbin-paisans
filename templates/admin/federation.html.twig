@@ -81,7 +81,7 @@
                 {% endif %}
             </h3>
 
-            {{ component('instance_list', {'instances': instances, 'showDenyButton': useAllowList, 'showUnBanButton': not useAllowList}) }}
+            {{ component('instance_list', {'instances': instances, 'showDenyButton': useAllowList, 'showUnBanButton': not useAllowList, 'showReadOnlyButton': useAllowList}) }}
         </div>
         <div class="section">
             <h3>{{ 'instances'|trans }}</h3>
@@ -90,6 +90,7 @@
                 'instances': allInstances,
                 'globallyBlockedInstances': allBlockedInstances,
                 'showDenyButton': useAllowList,
+                'showReadOnlyButton': useAllowList,
                 'showUnBanButton': not useAllowList,
                 'showAllowButton': useAllowList,
                 'showBanButton': not useAllowList,

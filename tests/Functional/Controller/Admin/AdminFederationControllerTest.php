@@ -66,4 +66,26 @@ class AdminFederationControllerTest extends WebTestCase
         $this->instanceManager->markInstanceReadWrite($instance);
         self::assertFalse($instance->isReadOnly);
     }
+
+    public function testAdminCanMarkAnInstanceReadOnlyThroughTheRoute(): void
+    {
+        $settings = $this->settingsManager->getDto();
+        $settings->MBIN_USE_FEDERATION_ALLOW_LIST = true;
+        $this->settingsManager->save($settings);
+
+        $instance = $this->instanceRepository->getOrCreateInstance('readonly.example.com');
+        $this->instanceManager->allowInstanceFederation($instance);
+
+        $this->client->loginUser($this->getUserByUsername('admin', isAdmin: true));
+        $this->client->request('GET', '/admin/federation/read-only?instanceDomain=readonly.example.com');
+
+        self::assertResponseRedirects('/admin/federation');
+        // the request booted its own kernel, so re-read rather than refreshing a detached entity
+        self::assertTrue($this->instanceRepository->findOneBy(['domain' => 'readonly.example.com'])->isReadOnly);
+
+        $this->client->request('GET', '/admin/federation/read-write?instanceDomain=readonly.example.com');
+
+        self::assertResponseRedirects('/admin/federation');
+        self::assertFalse($this->instanceRepository->findOneBy(['domain' => 'readonly.example.com'])->isReadOnly);
+    }
 }
