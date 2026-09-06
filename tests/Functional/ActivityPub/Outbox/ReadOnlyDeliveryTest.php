@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional\ActivityPub\Outbox;
 
+use App\Message\ActivityPub\Outbox\DeliverMessage;
 use App\Service\DeliverManager;
 use App\Tests\WebTestCase;
 use PHPUnit\Framework\Attributes\Group;
@@ -60,5 +61,33 @@ class ReadOnlyDeliveryTest extends WebTestCase
         self::assertCount(1, $posted);
         self::assertSame('Follow', $posted[0]['payload']['type']);
         self::assertSame(self::READ_ONLY_INBOX, $posted[0]['inboxUrl']);
+    }
+
+    public function testADirectlyDispatchedDeleteIsNotDelivered(): void
+    {
+        // DeleteUserHandler dispatches its own DeliverMessage, bypassing DeliverManager
+        $this->bus->dispatch(new DeliverMessage(self::READ_ONLY_INBOX, [
+            'type' => 'Delete',
+            'actor' => $this->localActorId,
+            'object' => ['type' => 'Person', 'id' => $this->localActorId],
+        ]));
+
+        self::assertSame([], $this->testingApHttpClient->getPostedObjects());
+    }
+
+    public function testADirectlyDispatchedActorUpdateIsDelivered(): void
+    {
+        // UserRotatePrivateKeys dispatches this one and it has to get through: suppress it
+        // and the remote instance keeps a stale key, which silently breaks every later
+        // Follow and Undo we sign
+        $this->bus->dispatch(new DeliverMessage(self::READ_ONLY_INBOX, [
+            'type' => 'Update',
+            'actor' => $this->localActorId,
+            'object' => ['type' => 'Person', 'id' => $this->localActorId],
+        ]));
+
+        $posted = $this->testingApHttpClient->getPostedObjects();
+        self::assertCount(1, $posted);
+        self::assertSame('Update', $posted[0]['payload']['type']);
     }
 }
