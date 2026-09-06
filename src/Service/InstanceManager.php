@@ -112,11 +112,9 @@ readonly class InstanceManager
 
     public function markInstanceReadWrite(Instance $instance): void
     {
-        if (!$this->settingsManager->getUseAllowList()) {
-            throw new \LogicException('Cannot mark an instance read write when not using an allow list');
-        }
-        // deliberately no isExplicitlyAllowed guard: clearing the flag has to stay possible
-        // on an instance whose allow was withdrawn while it was marked read only
+        // deliberately unguarded, unlike markInstanceReadOnly. Clearing the flag has to stay
+        // possible on an instance whose allow was withdrawn, and on one marked read only
+        // before the allow list itself was turned off. A guard here would strand the flag set.
         $instance->isReadOnly = false;
 
         $this->entityManager->flush();

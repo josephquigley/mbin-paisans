@@ -34,7 +34,7 @@ readonly class OutboundFederationPolicy
     }
 
     /**
-     * @param array $payload the built ActivityPub JSON that would be delivered
+     * @param array<string, mixed> $payload the built ActivityPub JSON that would be delivered
      */
     public function mayDeliver(string $inboxUrl, array $payload): bool
     {
@@ -96,6 +96,8 @@ readonly class OutboundFederationPolicy
      * Both halves are required. The type alone would let through an actor typed object
      * belonging to somebody else, and the locality alone would let through any local
      * object, which is every post the community writes.
+     *
+     * @param array<string, mixed> $payload
      */
     private function isOwnActorUpdate(array $payload): bool
     {
