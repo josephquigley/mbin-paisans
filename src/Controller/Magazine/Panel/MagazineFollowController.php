@@ -116,6 +116,16 @@ class MagazineFollowController extends AbstractController
         }
 
         if (null === $actor) {
+            // Log the value actually looked up, not the value typed. Resolution
+            // can return null without throwing, so without this the moderator
+            // sees a flash and the operator sees an empty log, which is the
+            // exact pairing that makes a failure here take a round trip to
+            // diagnose.
+            $this->logger->warning(
+                '[MagazineFollowController::add] Resolved nothing for "{input}" (looked up as "{resolved}")',
+                ['input' => $actorInput, 'resolved' => $normalizedInput]
+            );
+
             if ($malformed) {
                 $this->addFlash('error', 'flash_magazine_follow_malformed_error');
             } elseif ($derivedFromUrl) {
@@ -193,6 +203,17 @@ class MagazineFollowController extends AbstractController
         $host = parse_url($url, PHP_URL_HOST);
         $path = parse_url($url, PHP_URL_PATH) ?? '';
         $segments = array_values(array_filter(explode('/', trim($path, '/')), static fn ($segment) => '' !== $segment));
+
+        if (null !== $host && 0 === \count($segments)) {
+            // A bare host with no path, which is how an instance-wide actor is
+            // addressed and how someone naturally types "follow this whole
+            // site". WriteFreely publishes its instance actor with the host as
+            // its own preferredUsername, so webfinger resolves
+            // acct:<host>@<host> to it and lists the actor id as an alias.
+            // Fetching the root URL instead returns the site's HTML home page,
+            // which is not an actor and resolves to nothing.
+            return [\sprintf('@%s@%s', $host, $host), true];
+        }
 
         if (null !== $host && 1 === \count($segments)) {
             // Case 3 and 4: a profile URL with exactly one path segment,
