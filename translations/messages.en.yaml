@@ -278,7 +278,13 @@ flash_magazine_new_success: The magazine has been created successfully. You can
   now add new content or explore the magazine's administration panel.
 flash_magazine_edit_success: The magazine has been successfully edited.
 flash_magazine_follow_add_success: The follow has been added.
-flash_magazine_follow_not_found_error: That actor could not be found.
+flash_magazine_follow_not_found_error: That actor could not be found. The host
+  may be unreachable, or no such actor exists there.
+flash_magazine_follow_malformed_error: That doesn't look like an actor. Use a
+  handle like @user@example.com, or a full profile URL like
+  https://example.com/users/name.
+flash_magazine_follow_derived_handle_error: Could not find %handle%, which is
+  the handle that profile URL resolves to.
 flash_magazine_follow_exists_error: This magazine already follows that actor.
 flash_magazine_follow_restricted_error: This magazine only accepts posts from
   moderators, so a follow here would never deliver anything. Turn off "posting
