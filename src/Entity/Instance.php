@@ -53,6 +53,16 @@ class Instance
     #[Column(options: ['default' => false])]
     public bool $isExplicitlyAllowed = false;
 
+    /**
+     * Whether this instance is allowed to federate but must not receive our content.
+     *
+     * Only meaningful together with $isExplicitlyAllowed, since an instance that is not
+     * allowed receives nothing anyway. When true, inbound handling is unchanged and
+     * outbound delivery is limited to the follow handshake and updates of our own actors.
+     */
+    #[Column(options: ['default' => false])]
+    public bool $isReadOnly = false;
+
     #[Column, Id, GeneratedValue]
     private int $id;
 

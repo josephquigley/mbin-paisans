@@ -24,4 +24,46 @@ class AdminFederationControllerTest extends WebTestCase
             $this->settingsManager->getBannedInstances(),
         );
     }
+
+    public function testMarkInstanceReadOnlyRequiresTheAllowList(): void
+    {
+        $settings = $this->settingsManager->getDto();
+        $settings->MBIN_USE_FEDERATION_ALLOW_LIST = false;
+        $this->settingsManager->save($settings);
+
+        $instance = $this->instanceRepository->getOrCreateInstance('readonly.example.com');
+
+        $this->expectException(\LogicException::class);
+        $this->instanceManager->markInstanceReadOnly($instance);
+    }
+
+    public function testMarkInstanceReadOnlyRequiresAnAllowedInstance(): void
+    {
+        $settings = $this->settingsManager->getDto();
+        $settings->MBIN_USE_FEDERATION_ALLOW_LIST = true;
+        $this->settingsManager->save($settings);
+
+        $instance = $this->instanceRepository->getOrCreateInstance('readonly.example.com');
+
+        $this->expectException(\LogicException::class);
+        $this->instanceManager->markInstanceReadOnly($instance);
+    }
+
+    public function testMarkInstanceReadOnlyAndBack(): void
+    {
+        $settings = $this->settingsManager->getDto();
+        $settings->MBIN_USE_FEDERATION_ALLOW_LIST = true;
+        $this->settingsManager->save($settings);
+
+        $instance = $this->instanceRepository->getOrCreateInstance('readonly.example.com');
+        $this->instanceManager->allowInstanceFederation($instance);
+
+        $this->instanceManager->markInstanceReadOnly($instance);
+        self::assertTrue($instance->isReadOnly);
+        // read-only never removes the allow: inbound has to keep working
+        self::assertTrue($instance->isExplicitlyAllowed);
+
+        $this->instanceManager->markInstanceReadWrite($instance);
+        self::assertFalse($instance->isReadOnly);
+    }
 }
