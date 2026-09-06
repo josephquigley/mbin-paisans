@@ -37,7 +37,7 @@ class MagazineFollowController extends AbstractController
         Request $request,
     ): Response {
         if ($request->isMethod('POST')) {
-            $this->validateCsrf('magazine_follow_add', $request->request->get('token'));
+            $this->validateCsrf('magazine_follow_add', $request->getPayload()->get('token'));
 
             $this->add($magazine, trim((string) $request->request->get('actor')));
 
