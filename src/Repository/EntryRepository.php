@@ -95,6 +95,11 @@ class EntryRepository extends ServiceEntityRepository
             ->join('e.user', 'u')
             ->leftJoin('e.domain', 'd');
 
+        // A private entry is followers-only content, so it is added to the results only
+        // for a signed in user who follows its author. UserFollow is deliberately the
+        // only follow consulted here: a MAGAZINE that follows the author does not make
+        // that author's followers-only posts visible to everyone reading the magazine.
+        // Founder decision, 2026-09-06. See ActivityPubContent::getVisibility().
         if ($user && VisibilityInterface::VISIBILITY_VISIBLE === $criteria->visibility) {
             $qb->orWhere(
                 'e.user IN (SELECT IDENTITY(euf.following) FROM '.UserFollow::class.' euf WHERE euf.follower = :euf_user AND e.visibility = :euf_visibility)'

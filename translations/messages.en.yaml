@@ -359,17 +359,16 @@ add_badge: Add badge
 follows: Follows
 tags_and_follows: Tags & Follows
 add_follow: Add follow
-magazine_follow_actor: Actor handle or URL
+magazine_follow_actor: User/Group/Instance handle or URL
 magazine_follow_actor_placeholder: '@user@instance.tld or https://instance.tld/u/user'
-magazine_follow_kind: Carries
-magazine_follow_kind_default: Use the default for this kind of actor
-magazine_follow_kind_create: Posts the actor writes
-magazine_follow_kind_announce: Posts the actor announces
-magazine_follow_kind_both: Both
-magazine_follow_kind_help: An instance actor usually announces posts written by the
-  accounts it hosts, so a follow on one has to carry announces. A person's own posts
-  arrive as creates, and carrying their announces as well would file everything they
-  boost in this magazine.
+magazine_follow_kind: Filters
+magazine_follow_kind_default: Default for account type
+magazine_follow_kind_create: Posts
+magazine_follow_kind_announce: Boosts, Re-Blogs & Announcements
+magazine_follow_kind_both: Both Kinds
+magazine_follow_kind_help: Boosts, Re-Blogs & Announcements often result in more noise
+  that may publish content which does not fit the topic of this magazine. Use it with
+  care.
 bans: Bans
 created: Created
 expires: Expires

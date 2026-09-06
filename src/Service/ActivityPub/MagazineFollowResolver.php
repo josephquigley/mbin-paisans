@@ -12,6 +12,13 @@ use App\Repository\MagazineRepository;
  * Decides which magazine an incoming post belongs to once addressing has been
  * resolved.
  *
+ * This answers WHICH magazine, never WHO MAY SEE IT. An object addressed only to its
+ * author's followers is routed here like any other and then stored private by
+ * ActivityPubContent::getVisibility(), so it stays visible only to a user who follows
+ * that author. Widening it because a magazine follows the author would publish
+ * followers-only content to everyone who can read the magazine, and is deliberately
+ * out of scope (founder decision, 2026-09-06).
+ *
  * Extracted from ActivityPubManager so the decision can be tested without
  * standing up that class's 24 collaborators.
  */
