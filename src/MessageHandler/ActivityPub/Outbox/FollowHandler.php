@@ -63,6 +63,11 @@ class FollowHandler extends MbinMessageHandler
         }
 
         $followObject = $this->activityRepository->findFirstActivitiesByTypeObjectAndActor('Follow', $following, $follower);
+        if (null !== $followObject && !empty($this->activityRepository->findAllActivitiesByTypeObjectAndActor('Undo', $followObject, $follower))) {
+            // a previous Follow was already undone, so it must not be reused: the remote has already
+            // processed that activity id and will not act on it again
+            $followObject = null;
+        }
         if (null === $followObject) {
             $followObject = $this->followWrapper->build($follower, $following);
         }
