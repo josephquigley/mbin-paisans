@@ -24,12 +24,11 @@ use Psr\Log\NullLogger;
  * administrator out of their own instance at once. Removing admin is therefore
  * left as a local, deliberate act.
  *
- * The claim is read from the id_token first, which has been verified, and only
- * then from the userinfo response. The userinfo response is not signed, so it
- * is only as trustworthy as the transport it arrived over: it is consulted
- * only when the userinfo endpoint is HTTPS. An admin who overrides the
- * endpoint with a plain http:// address on a container network keeps working
- * logins, but that response cannot appoint administrators.
+ * Where the group list comes from, and how far it is trusted, is
+ * OidcGroupClaims. What belongs here is only what this policy does when that
+ * reader cannot answer: it declines to promote. OidcMemberGroupPolicy reads
+ * exactly the same input and refuses the login instead, which is why the
+ * reading is shared and the default is not.
  */
 class OidcAdminGroupPolicy
 {
@@ -38,7 +37,7 @@ class OidcAdminGroupPolicy
 
     public function __construct(
         ?string $adminGroup,
-        private readonly OidcMetadataResolver $metadataResolver,
+        private readonly OidcGroupClaims $groupClaims,
         ?LoggerInterface $logger = null,
     ) {
         $adminGroup = trim((string) $adminGroup);
@@ -65,51 +64,14 @@ class OidcAdminGroupPolicy
             return false;
         }
 
-        $groups = self::groupsIn($idTokenClaims);
+        $groups = $this->groupClaims->resolve($idTokenClaims, $resourceOwner);
 
         if (null === $groups) {
-            if (!$this->userinfoIsTrusted()) {
-                $this->logger->warning('OIDC admin group ignored: the id_token carries no groups claim and the userinfo endpoint is not HTTPS');
+            $this->logger->warning('OIDC admin group ignored: the id_token carries no groups claim and the userinfo endpoint is not HTTPS');
 
-                return false;
-            }
-
-            $groups = $resourceOwner->getGroups();
-        }
-
-        return \in_array($this->adminGroup, $groups, true);
-    }
-
-    private function userinfoIsTrusted(): bool
-    {
-        try {
-            $endpoint = $this->metadataResolver->resolve()->userinfoEndpoint;
-        } catch (\Throwable) {
             return false;
         }
 
-        return str_starts_with(strtolower($endpoint), 'https://');
-    }
-
-    /**
-     * @param array<string, mixed> $claims
-     *
-     * @return string[]|null null when the claim is absent or null, which is
-     *                       different from present and empty: absent means
-     *                       look further
-     */
-    private static function groupsIn(array $claims): ?array
-    {
-        $groups = $claims['groups'] ?? null;
-
-        if (null === $groups) {
-            return null;
-        }
-
-        if (!\is_array($groups)) {
-            return [];
-        }
-
-        return array_values(array_filter($groups, 'is_string'));
+        return \in_array($this->adminGroup, $groups, true);
     }
 }

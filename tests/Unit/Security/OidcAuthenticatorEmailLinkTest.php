@@ -14,6 +14,7 @@ use App\Security\OidcAuthenticator;
 use App\Service\ImageManagerInterface;
 use App\Service\IpResolver;
 use App\Service\Oidc\OidcAdminGroupPolicy;
+use App\Service\Oidc\OidcGroupClaims;
 use App\Service\Oidc\OidcMetadataResolver;
 use App\Service\Oidc\OidcTokenValidator;
 use App\Service\SettingsManager;
@@ -85,10 +86,12 @@ class OidcAuthenticatorEmailLinkTest extends TestCase
         $userRepository = $this->createStub(UserRepository::class);
         $userRepository->method('findOneBy')->willReturn($existingByEmail);
 
+        $groupClaimsResolver = new OidcMetadataResolver(new MockHttpClient([]), new ArrayAdapter(), 'https://idp.test', 'https://idp.test/a', 'https://idp.test/t', 'https://idp.test/u', 'https://idp.test/j');
+
         $authenticator = new OidcAuthenticator(
             $client,
             $validator,
-            new OidcAdminGroupPolicy(null, new OidcMetadataResolver(new MockHttpClient([]), new ArrayAdapter(), 'https://idp.test', 'https://idp.test/a', 'https://idp.test/t', 'https://idp.test/u', 'https://idp.test/j')),
+            new OidcAdminGroupPolicy(null, new OidcGroupClaims($groupClaimsResolver)),
             $entityManager,
             $this->createStub(UserManager::class),
             $this->createStub(ImageManagerInterface::class),

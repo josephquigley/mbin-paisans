@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Service\Oidc;
 
 use App\Provider\OidcResourceOwner;
 use App\Service\Oidc\OidcAdminGroupPolicy;
+use App\Service\Oidc\OidcGroupClaims;
 use App\Service\Oidc\OidcMetadataResolver;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -129,7 +130,7 @@ class OidcAdminGroupPolicyTest extends TestCase
             'https://idp.test/jwks',
         );
 
-        return new OidcAdminGroupPolicy($group, $resolver);
+        return new OidcAdminGroupPolicy($group, new OidcGroupClaims($resolver));
     }
 
     /**
