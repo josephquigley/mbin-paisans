@@ -351,6 +351,7 @@ accepted: Accepted
 add_moderator: Add moderator
 add_badge: Add badge
 follows: Follows
+tags_and_follows: Tags and follows
 add_follow: Add follow
 magazine_follow_actor: Actor handle or URL
 magazine_follow_actor_placeholder: '@user@instance.tld or https://instance.tld/u/user'
