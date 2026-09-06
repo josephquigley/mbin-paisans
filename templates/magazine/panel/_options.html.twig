@@ -36,14 +36,8 @@
         </li>
         <li>
             <a href="{{ path('magazine_panel_tags', {name: magazine.name}) }}"
-               class="{{ html_classes({'active': is_route_name('magazine_panel_tags')}) }}">
-                {{ 'tags'|trans }}
-            </a>
-        </li>
-        <li>
-            <a href="{{ path('magazine_panel_follows', {name: magazine.name}) }}"
-               class="{{ html_classes({'active': is_route_name_contains('_follow')}) }}">
-                {{ 'follows'|trans }}
+               class="{{ html_classes({'active': is_route_name('magazine_panel_tags') or is_route_name_contains('_follow')}) }}">
+                {{ 'tags_and_follows'|trans }}
             </a>
         </li>
         <li>

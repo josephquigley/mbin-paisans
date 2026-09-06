@@ -40,17 +40,9 @@ class MagazineFollowController extends AbstractController
             $this->validateCsrf('magazine_follow_add', $request->getPayload()->get('token'));
 
             $this->add($magazine, trim((string) $request->request->get('actor')));
-
-            return $this->redirectToRoute('magazine_panel_follows', ['name' => $magazine->name]);
         }
 
-        return $this->render(
-            'magazine/panel/follows.html.twig',
-            [
-                'magazine' => $magazine,
-                'follows' => $this->repository->findByMagazine($magazine),
-            ]
-        );
+        return $this->redirectToRoute('magazine_panel_tags', ['name' => $magazine->name]);
     }
 
     #[IsGranted('ROLE_USER')]
@@ -81,7 +73,7 @@ class MagazineFollowController extends AbstractController
         $this->entityManager->remove($follow);
         $this->entityManager->flush();
 
-        return $this->redirectToRefererOrHome($request);
+        return $this->redirectToRoute('magazine_panel_tags', ['name' => $magazine->name]);
     }
 
     private function add(Magazine $magazine, string $actorInput): void

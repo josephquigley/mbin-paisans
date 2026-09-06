@@ -1,0 +1,62 @@
+{% include 'layout/_flash.html.twig' %}
+{% if follows|length %}
+    <div id="content" class="section follows-table table-responsive">
+        <table>
+            <thead>
+            <tr>
+                <th>{{ 'name'|trans }}</th>
+                <th>{{ 'status'|trans }}</th>
+                <th>{{ 'created'|trans }}</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for follow in follows %}
+                <tr>
+                    <td>
+                        {% if follow.followingUser %}
+                            {{ component('user_inline', {user: follow.followingUser, showNewIcon: false}) }}
+                        {% else %}
+                            {{ component('magazine_inline', {magazine: follow.followingMagazine, showNewIcon: false}) }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge">{{ follow.status|trans }}</span>
+                    </td>
+                    <td>{{ component('date', {date: follow.createdAt}) }}</td>
+                    <td>
+                        <form method="post"
+                              action="{{ path('magazine_panel_follow_remove', {magazine_name: magazine.name, follow_id: follow.id}) }}"
+                              data-action="confirmation#ask" data-confirmation-message-param="{{ 'are_you_sure'|trans }}">
+                            <input type="hidden" name="token" value="{{ csrf_token('magazine_follow_remove') }}">
+                            <button class="btn btn__secondary">{{ 'delete'|trans }}</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+{% if not follows|length %}
+    <aside class="section section--muted">
+        <p>{{ 'empty'|trans }}</p>
+    </aside>
+{% endif %}
+<section class="section follow-add">
+    <div class="container">
+        <h3 hidden>{{ 'add_follow'|trans }}</h3>
+        <form action="{{ path('magazine_panel_follows', {name: magazine.name}) }}"
+              method="post"
+              name="follow">
+            <input type="hidden" name="token" value="{{ csrf_token('magazine_follow_add') }}">
+            <div>
+                <label for="actor">{{ 'magazine_follow_actor'|trans }}</label>
+                <input id="actor" type="text" name="actor" placeholder="{{ 'magazine_follow_actor_placeholder'|trans }}">
+            </div>
+            <div class="actions">
+                <button class="btn btn__primary" type="submit">{{ 'add_follow'|trans }}</button>
+            </div>
+        </form>
+    </div>
+</section>

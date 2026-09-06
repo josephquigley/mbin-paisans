@@ -1,7 +1,7 @@
 {% extends 'base.html.twig' %}
 
 {%- block title -%}
-    {{- 'tags'|trans }} - {{ 'magazine_panel'|trans }} - {{ parent() -}}
+    {{- 'tags_and_follows'|trans }} - {{ 'magazine_panel'|trans }} - {{ parent() -}}
 {%- endblock -%}
 
 {% block mainClass %}page-magazine-panel page-magazine-tags{% endblock %}
@@ -29,4 +29,7 @@
             {{ form_end(form) }}
         </div>
     </div>
+
+    <h2 hidden>{{ 'follows'|trans }}</h2>
+    {% include 'magazine/panel/_follows_section.html.twig' %}
 {% endblock %}
