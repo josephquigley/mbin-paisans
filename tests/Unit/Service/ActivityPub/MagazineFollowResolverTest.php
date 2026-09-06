@@ -12,65 +12,74 @@ use PHPUnit\Framework\TestCase;
 
 class MagazineFollowResolverTest extends TestCase
 {
-    private MagazineFollowRepository $follows;
-    private MagazineRepository $magazines;
-    private MagazineFollowResolver $resolver;
-    private Magazine $random;
+    private const string DELIVERER = 'https://blog.example.com/api/collections/blog.example.com';
+    private const string AUTHOR = 'https://blog.example.com/api/collections/quigs';
 
-    protected function setUp(): void
+    private function magazine(string $name): Magazine
     {
-        $this->follows = $this->createMock(MagazineFollowRepository::class);
-        $this->magazines = $this->createMock(MagazineRepository::class);
-        $this->resolver = new MagazineFollowResolver($this->follows, $this->magazines);
-        $this->random = $this->createMock(Magazine::class);
+        return new Magazine($name, ucfirst($name), null, null, null, false, false, null);
     }
 
-    public function testAnAddressedMagazineWinsAndTheFollowLookupIsNotConsulted(): void
+    private function resolverFollowing(?string $followedUrl, ?Magazine $magazine, ?Magazine $random = null): MagazineFollowResolver
     {
-        $addressed = $this->createMock(Magazine::class);
-        $this->follows->expects(self::never())->method('findMagazineFollowing');
-        $this->magazines->expects(self::never())->method('findOneByName');
+        $follows = $this->createStub(MagazineFollowRepository::class);
+        $follows->method('findMagazineFollowing')->willReturnCallback(
+            fn (?string $url, ?string $activityType = null) => null !== $url && $url === $followedUrl ? $magazine : null
+        );
+        $magazines = $this->createStub(MagazineRepository::class);
+        $magazines->method('findOneByName')->willReturn($random);
 
-        self::assertSame($addressed, $this->resolver->resolve($addressed, 'https://blog.example/api/collections/quigs'));
+        return new MagazineFollowResolver($follows, $magazines);
     }
 
-    public function testAFollowedActorRoutesToTheFollowingMagazine(): void
+    public function testAnAddressedMagazineStillWins(): void
     {
-        $following = $this->createMock(Magazine::class);
-        $this->follows->method('findMagazineFollowing')
-            ->with('https://blog.example/api/collections/quigs')
-            ->willReturn($following);
-        $this->magazines->expects(self::never())->method('findOneByName');
+        $addressed = $this->magazine('addressed');
+        $resolver = $this->resolverFollowing(self::DELIVERER, $this->magazine('followed'));
 
-        self::assertSame($following, $this->resolver->resolve(null, 'https://blog.example/api/collections/quigs'));
+        self::assertSame($addressed, $resolver->resolve($addressed, self::DELIVERER, self::AUTHOR, 'Announce'));
     }
 
-    public function testAnUnfollowedActorFallsBackToRandom(): void
+    public function testItRoutesByTheDelivererNotTheAuthor(): void
     {
-        $this->follows->method('findMagazineFollowing')->willReturn(null);
-        $this->magazines->method('findOneByName')->with('random')->willReturn($this->random);
+        // the observed bug: an instance actor announces a post written by a blog it
+        // hosts, and only the instance actor is followed
+        $magazine = $this->magazine('blog');
+        $resolver = $this->resolverFollowing(self::DELIVERER, $magazine);
 
-        self::assertSame($this->random, $this->resolver->resolve(null, 'https://elsewhere.example/users/nobody'));
+        self::assertSame($magazine, $resolver->resolve(null, self::DELIVERER, self::AUTHOR, 'Announce'));
     }
 
-    public function testANullActorUrlFallsBackToRandom(): void
+    public function testItFallsBackToTheAuthorWhenNobodyDelivered(): void
     {
-        // Pins null-safety of the fallback chain: resolve() must tolerate a
-        // null actor URL end to end and still land on 'random'.
-        //
-        // This is not a test of the Group/Announce gap recorded in spec
-        // section 2.6 of specs/08-magazine-follows.md. In that scenario the
-        // actor URL is not null: a relayed Announce still carries the
-        // original author's id in attributedTo, and the gap is that no
-        // magazine follows that author, which is the case already covered by
-        // testAnUnfollowedActorFallsBackToRandom above. A resolver test
-        // cannot detect the Group/Announce gap at all, since the announcing
-        // actor is lost one level up in ChainActivityHandler, outside this
-        // class's call graph. A real guard for that gap belongs in a test
-        // over ChainActivityHandler and is out of scope here.
-        $this->follows->method('findMagazineFollowing')->with(null)->willReturn(null);
-        $this->magazines->method('findOneByName')->with('random')->willReturn($this->random);
+        // an object we fetched ourselves has no delivering actor, so attributedTo is
+        // the only claim available
+        $magazine = $this->magazine('blog');
+        $resolver = $this->resolverFollowing(self::AUTHOR, $magazine);
 
-        self::assertSame($this->random, $this->resolver->resolve(null, null));
+        self::assertSame($magazine, $resolver->resolve(null, null, self::AUTHOR, 'Create'));
+    }
+
+    public function testItFallsBackToTheAuthorWhenTheDelivererIsNotFollowed(): void
+    {
+        $magazine = $this->magazine('blog');
+        $resolver = $this->resolverFollowing(self::AUTHOR, $magazine);
+
+        self::assertSame($magazine, $resolver->resolve(null, self::DELIVERER, self::AUTHOR, 'Create'));
+    }
+
+    public function testItFallsThroughToRandomWhenNothingFollows(): void
+    {
+        $random = $this->magazine('random');
+        $resolver = $this->resolverFollowing(null, null, $random);
+
+        self::assertSame($random, $resolver->resolve(null, self::DELIVERER, self::AUTHOR, 'Create'));
+    }
+
+    public function testItReturnsNullWhenNothingFollowsAndThereIsNoRandom(): void
+    {
+        $resolver = $this->resolverFollowing(null, null, null);
+
+        self::assertNull($resolver->resolve(null, self::DELIVERER, self::AUTHOR, 'Create'));
     }
 }

@@ -14,6 +14,11 @@ class ChainActivityMessage implements ActivityPubResolveInterface
         public ?array $announce = null,
         public ?array $like = null,
         public ?array $dislike = null,
+        // The actor that delivered the activity this chain came from, and the kind of
+        // activity it was. Both are read from the already signature-verified activity,
+        // never from the object it points at.
+        public ?string $deliveredBy = null,
+        public ?string $deliveredKind = null,
     ) {
     }
 }
