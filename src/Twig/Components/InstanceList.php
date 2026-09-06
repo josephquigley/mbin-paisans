@@ -19,4 +19,6 @@ class InstanceList
     public bool $showDenyButton = false;
 
     public bool $showAllowButton = false;
+
+    public bool $showReadOnlyButton = false;
 }

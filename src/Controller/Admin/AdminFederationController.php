@@ -113,6 +113,24 @@ class AdminFederationController extends AbstractController
     }
 
     #[IsGranted('ROLE_ADMIN')]
+    public function markInstanceReadOnly(#[MapQueryParameter] string $instanceDomain): Response
+    {
+        $instance = $this->instanceRepository->getOrCreateInstance($instanceDomain);
+        $this->instanceManager->markInstanceReadOnly($instance);
+
+        return $this->redirectToRoute('admin_federation');
+    }
+
+    #[IsGranted('ROLE_ADMIN')]
+    public function markInstanceReadWrite(#[MapQueryParameter] string $instanceDomain): Response
+    {
+        $instance = $this->instanceRepository->getOrCreateInstance($instanceDomain);
+        $this->instanceManager->markInstanceReadWrite($instance);
+
+        return $this->redirectToRoute('admin_federation');
+    }
+
+    #[IsGranted('ROLE_ADMIN')]
     public function denyInstance(#[MapQueryParameter] string $instanceDomain, Request $request): Response
     {
         $instance = $this->instanceRepository->getOrCreateInstance($instanceDomain);
