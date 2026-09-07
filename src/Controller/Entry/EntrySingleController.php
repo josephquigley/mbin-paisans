@@ -18,6 +18,7 @@ use App\Repository\Criteria;
 use App\Repository\EntryCommentRepository;
 use App\Repository\ImageRepository;
 use App\Service\MentionManager;
+use App\Service\OutboundFederationPolicy;
 use Doctrine\ORM\EntityManagerInterface;
 use Pagerfanta\PagerfantaInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -38,6 +39,7 @@ class EntrySingleController extends AbstractController
         private readonly EntryCommentRepository $commentRepository,
         private readonly EventDispatcherInterface $dispatcher,
         private readonly MentionManager $mentionManager,
+        private readonly OutboundFederationPolicy $outboundFederationPolicy,
         private readonly LoggerInterface $logger,
         private readonly EntityManagerInterface $entityManager,
     ) {
@@ -100,7 +102,10 @@ class EntrySingleController extends AbstractController
         }
 
         $dto = new EntryCommentDto();
-        if ($user && $user->addMentionsEntries && $entry->user !== $user) {
+        // no prefilled handle for an author we would never deliver to: the box would be
+        // teaching the member to address a host that never receives it
+        if ($user && $user->addMentionsEntries && $entry->user !== $user
+            && !$this->outboundFederationPolicy->isReadOnlyHandle($entry->user->username)) {
             $dto->body = $this->mentionManager->addHandle([$entry->user->username])[0];
         }
 

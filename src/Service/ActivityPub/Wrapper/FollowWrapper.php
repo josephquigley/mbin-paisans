@@ -16,7 +16,7 @@ class FollowWrapper
     ) {
     }
 
-    public function build(User $follower, User|Magazine $following): Activity
+    public function build(User|Magazine $follower, User|Magazine $following): Activity
     {
         $activity = new Activity('Follow');
         $activity->setActor($follower);

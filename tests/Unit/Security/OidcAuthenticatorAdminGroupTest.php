@@ -14,6 +14,8 @@ use App\Security\OidcAuthenticator;
 use App\Service\ImageManagerInterface;
 use App\Service\IpResolver;
 use App\Service\Oidc\OidcAdminGroupPolicy;
+use App\Service\Oidc\OidcGroupClaims;
+use App\Service\Oidc\OidcMemberGroupPolicy;
 use App\Service\Oidc\OidcMetadataResolver;
 use App\Service\Oidc\OidcTokenValidator;
 use App\Service\SettingsManager;
@@ -151,7 +153,8 @@ class OidcAuthenticatorAdminGroupTest extends TestCase
         $authenticator = new OidcAuthenticator(
             $client,
             $validator,
-            new OidcAdminGroupPolicy($adminGroup, $resolver),
+            new OidcAdminGroupPolicy($adminGroup, new OidcGroupClaims($resolver)),
+            new OidcMemberGroupPolicy(null, new OidcGroupClaims($resolver)),
             $entityManager,
             $this->createStub(UserManager::class),
             $this->createStub(ImageManagerInterface::class),

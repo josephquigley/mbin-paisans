@@ -16,6 +16,7 @@ use App\Service\ImageManagerInterface;
 use App\Service\IpResolver;
 use App\Service\Oidc\Exception\OidcValidationException;
 use App\Service\Oidc\OidcAdminGroupPolicy;
+use App\Service\Oidc\OidcMemberGroupPolicy;
 use App\Service\Oidc\OidcTokenValidator;
 use App\Service\SettingsManager;
 use App\Service\UserManager;
@@ -56,6 +57,7 @@ class OidcAuthenticator extends MbinOAuthAuthenticatorBase
         private readonly OidcClient $client,
         private readonly OidcTokenValidator $tokenValidator,
         private readonly OidcAdminGroupPolicy $adminGroupPolicy,
+        private readonly OidcMemberGroupPolicy $memberGroupPolicy,
         private readonly EntityManagerInterface $entityManager,
         private readonly UserManager $userManager,
         private readonly ImageManagerInterface $imageManager,
@@ -122,6 +124,25 @@ class OidcAuthenticator extends MbinOAuthAuthenticatorBase
                 $existingUser = $this->entityManager->getRepository(User::class)->findOneBy(
                     ['oauthOidcId' => $oidcUser->getId()]
                 );
+
+                // The admission gate, and the only check here that can refuse
+                // somebody the provider was willing to issue a token to.
+                //
+                // Administrators of this instance are exempt, deliberately: a
+                // provider that stops emitting the group claim would otherwise
+                // lock out the only people who could put it back, and on an
+                // MBIN_SSO_ONLY_MODE instance there is no password login to
+                // recover through. The exemption reads the linked account, so
+                // it cannot apply to a first login. That is correct: provisioning
+                // a new account is exactly what the gate is for.
+                if (!$existingUser?->isAdmin() && !$this->memberGroupPolicy->permits($claims, $oidcUser)) {
+                    $this->logger->warning('OIDC login refused: {subject} is not in {group}', [
+                        'subject' => $oidcUser->getId(),
+                        'group' => $this->memberGroupPolicy->group(),
+                    ]);
+
+                    throw new CustomUserMessageAuthenticationException(self::FAILURE_MESSAGE);
+                }
 
                 if ($existingUser) {
                     $this->rememberEntitlement($request, $existingUser, $claims, $oidcUser);

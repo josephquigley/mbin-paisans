@@ -22,7 +22,7 @@ parameters:
     # our nodeinfo or our request log needs to know. software.name stays
     # 'mbin' on purpose: peers record and branch on it, so a novel name would
     # make us unrecognised software rather than honest software.
-    mbin_version: '1.12.3+paisans'
+    mbin_version: '1.13.0+paisans'
     kbin_domain: '%env(KBIN_DOMAIN)%'
     kbin_title: '%env(KBIN_TITLE)%'
     kbin_meta_title: '%env(KBIN_META_TITLE)%'
@@ -99,6 +99,7 @@ parameters:
     oauth_oidc_username_claim: '%env(default::OAUTH_OIDC_USERNAME_CLAIM)%'
     oauth_oidc_fetch_icon: '%env(default::OAUTH_OIDC_FETCH_ICON)%'
     oauth_oidc_admin_group: '%env(default::OAUTH_OIDC_ADMIN_GROUP)%'
+    oauth_oidc_member_group: '%env(default::OAUTH_OIDC_MEMBER_GROUP)%'
     oauth_oidc_authorize_url: '%env(default::OAUTH_OIDC_AUTHORIZE_URL)%'
     oauth_oidc_token_url: '%env(default::OAUTH_OIDC_TOKEN_URL)%'
     oauth_oidc_userinfo_url: '%env(default::OAUTH_OIDC_USERINFO_URL)%'
@@ -353,6 +354,7 @@ services:
                 metadata_resolver: '@App\Service\Oidc\OidcMetadataResolver'
                 username_claim: '%oauth_oidc_username_claim%'
                 admin_group: '%oauth_oidc_admin_group%'
+                member_group: '%oauth_oidc_member_group%'
             - 'oauth_oidc_verify'
 
     App\Security\Oidc\OidcClient:
@@ -370,3 +372,7 @@ services:
     App\Service\Oidc\OidcAdminGroupPolicy:
         arguments:
             $adminGroup: '%oauth_oidc_admin_group%'
+
+    App\Service\Oidc\OidcMemberGroupPolicy:
+        arguments:
+            $memberGroup: '%oauth_oidc_member_group%'

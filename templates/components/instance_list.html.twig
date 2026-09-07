@@ -7,7 +7,7 @@
         {% if app.user is defined and app.user is not same as null and app.user.admin %}
             <th>{{ 'last_successful_deliver'|trans }}</th>
             <th>{{ 'last_successful_receive'|trans }}</th>
-            {% if showUnBanButton or showBanButton or showDenyButton or showAllowButton %}
+            {% if showUnBanButton or showBanButton or showDenyButton or showAllowButton or showReadOnlyButton %}
                 <th></th>
             {% endif %}
         {% endif %}
@@ -16,7 +16,10 @@
     <tbody>
     {% for instance in instances %}
         <tr>
-            <td><a href="https://{{ instance.domain }}" rel="noopener noreferrer nofollow">{{instance.domain}}</a></td>
+            <td>
+                <a href="https://{{ instance.domain }}" rel="noopener noreferrer nofollow">{{instance.domain}}</a>
+                {% if instance.isReadOnly %}<span class="badge">{{ 'federation_read_only'|trans }}</span>{% endif %}
+            </td>
             <td>{{ instance.software ?? '' }}</td>
             <td>{{ instance.version ?? '' }}</td>
             {% if app.user is defined and app.user is not same as null and app.user.admin %}
@@ -30,7 +33,7 @@
                         {{ component('date', { date: instance.lastSuccessfulReceive }) }}
                     {% endif %}
                 </td>
-                {% if showUnBanButton or showBanButton or showDenyButton or showAllowButton %}
+                {% if showUnBanButton or showBanButton or showDenyButton or showAllowButton or showReadOnlyButton %}
                     <td>
                         <div class="actions row" style="width: max-content" data-controller="">
                             {% if showUnBanButton and instance.isBanned %}
@@ -64,6 +67,24 @@
                                     <button data-action="confirmation#ask" data-confirmation-message-param="{{ 'are_you_sure'|trans }}"
                                         class="btn btn__primary" type="submit">
                                         {{ 'btn_allow'|trans }}
+                                    </button>
+                                </form>
+                            {% endif %}
+                            {% if showReadOnlyButton and instance.isExplicitlyAllowed and not instance.isReadOnly %}
+                                <form action="{{ url('admin_federation_read_only_instance') }}">
+                                    <input type="hidden" name="instanceDomain" value="{{ instance.domain }}">
+                                    <button data-action="confirmation#ask" data-confirmation-message-param="{{ 'are_you_sure'|trans }}"
+                                        class="btn btn__primary" type="submit" title="{{ 'federation_read_only_help'|trans }}">
+                                        {{ 'federation_mark_read_only'|trans }}
+                                    </button>
+                                </form>
+                            {% endif %}
+                            {% if showReadOnlyButton and instance.isReadOnly %}
+                                <form action="{{ url('admin_federation_read_write_instance') }}">
+                                    <input type="hidden" name="instanceDomain" value="{{ instance.domain }}">
+                                    <button data-action="confirmation#ask" data-confirmation-message-param="{{ 'are_you_sure'|trans }}"
+                                        class="btn btn__primary" type="submit">
+                                        {{ 'federation_mark_read_write'|trans }}
                                     </button>
                                 </form>
                             {% endif %}

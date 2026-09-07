@@ -7,6 +7,7 @@ namespace App\Controller\Magazine\Panel;
 use App\Controller\AbstractController;
 use App\Entity\Magazine;
 use App\Form\MagazineTagsType;
+use App\Repository\MagazineFollowRepository;
 use App\Service\BadgeManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
@@ -18,6 +19,7 @@ class MagazineTagController extends AbstractController
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
+        private readonly MagazineFollowRepository $followRepository,
     ) {
     }
 
@@ -42,6 +44,7 @@ class MagazineTagController extends AbstractController
         return $this->render('magazine/panel/tags.html.twig', [
             'magazine' => $magazine,
             'form' => $form,
+            'follows' => $this->followRepository->findByMagazine($magazine),
         ]);
     }
 }

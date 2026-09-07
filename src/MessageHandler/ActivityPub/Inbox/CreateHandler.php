@@ -13,6 +13,7 @@ use App\Exception\EntryLockedException;
 use App\Exception\InstanceBannedException;
 use App\Exception\InvalidApPostException;
 use App\Exception\InvalidWebfingerException;
+use App\Exception\NoMagazineFoundException;
 use App\Exception\PostingRestrictedException;
 use App\Exception\PostLockedException;
 use App\Exception\TagBannedException;
@@ -120,6 +121,8 @@ class CreateHandler extends MbinMessageHandler
             $this->logger->info('[CreateHandler::doWork] Did not create the message, because the user is blocked by one of the receivers');
         } catch (EntryLockedException|PostLockedException) {
             $this->logger->info('[CreateHandler::doWork] Did not create the comment, because the entry/post is locked');
+        } catch (NoMagazineFoundException $e) {
+            $this->logger->warning('[CreateHandler::doWork] Did not create the post, because no magazine could be resolved for it: {m}', ['m' => $e->getMessage()]);
         }
     }
 
@@ -136,13 +139,13 @@ class CreateHandler extends MbinMessageHandler
         if (isset($object['inReplyTo']) && $object['inReplyTo']) {
             $existed = $this->repository->findByObjectId($object['inReplyTo']);
             if (!$existed) {
-                $this->bus->dispatch(new ChainActivityMessage([$object]));
+                $this->bus->dispatch(new ChainActivityMessage([$object], deliveredBy: $fullCreatePayload['actor'] ?? null, deliveredKind: 'Create'));
 
                 return;
             }
         }
 
-        $note = $this->note->create($object, stickyIt: $stickyIt);
+        $note = $this->note->create($object, stickyIt: $stickyIt, deliveredBy: $fullCreatePayload['actor'] ?? null, activityType: 'Create');
         if ($note instanceof EntryComment || $note instanceof Post || $note instanceof PostComment) {
             if (null !== $note->apId and null === $note->magazine->apId and 'random' !== $note->magazine->name) {
                 $createActivity = $this->activityRepository->findFirstActivitiesByTypeAndObject('Create', $note);
@@ -169,7 +172,7 @@ class CreateHandler extends MbinMessageHandler
      */
     private function handlePage(array $object, bool $stickyIt, ?array $createPayload): void
     {
-        $page = $this->page->create($object, stickyIt: $stickyIt);
+        $page = $this->page->create($object, stickyIt: $stickyIt, deliveredBy: $createPayload['actor'] ?? null, activityType: 'Create');
         if ($page instanceof Entry) {
             if (null !== $page->apId and null === $page->magazine->apId and 'random' !== $page->magazine->name) {
                 $createActivity = $this->activityRepository->findFirstActivitiesByTypeAndObject('Create', $page);

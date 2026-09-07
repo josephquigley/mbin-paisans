@@ -41,4 +41,11 @@ trait FollowActivityGeneratorTrait
     {
         return $this->followResponseWrapper->build($this->magazine, $this->getFollowMagazineActivity(), isReject: true);
     }
+
+    public function getMagazineFollowsUserActivity(): Activity
+    {
+        $user2 = $this->getUserByUsername('user2');
+
+        return $this->followWrapper->build($this->magazine, $user2);
+    }
 }

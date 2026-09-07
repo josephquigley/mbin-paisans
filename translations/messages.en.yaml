@@ -277,6 +277,23 @@ flash_thread_unpin_success: The thread has been successfully unpinned.
 flash_magazine_new_success: The magazine has been created successfully. You can
   now add new content or explore the magazine's administration panel.
 flash_magazine_edit_success: The magazine has been successfully edited.
+flash_magazine_follow_add_success: The follow has been added.
+flash_magazine_follow_not_found_error: That actor could not be found. The host
+  may be unreachable, or no such actor exists there.
+flash_magazine_follow_malformed_error: That doesn't look like an actor. Use a
+  handle like @user@example.com, or a full profile URL like
+  https://example.com/users/name.
+flash_magazine_follow_derived_handle_error: Could not find %handle%, which is
+  the handle that profile URL resolves to.
+flash_magazine_follow_exists_error: This magazine already follows that actor.
+flash_magazine_follow_restricted_error: This magazine only accepts posts from
+  moderators, so a follow here would never deliver anything. Turn off "posting
+  restricted to moderators" first.
+flash_magazine_follow_local_actor_error: That actor is local to this instance
+  and cannot be followed here.
+flash_magazine_follow_kind_success: What this follow carries has been updated.
+flash_magazine_follow_kind_invalid_error: That is not a kind of activity a follow
+  can carry, so nothing was changed.
 flash_mark_as_adult_success: The post has been successfully marked as NSFW.
 flash_unmark_as_adult_success: The post has been successfully unmarked as NSFW.
 too_many_requests: Limit exceeded, please try again later.
@@ -339,8 +356,22 @@ unban_hashtag_description: Unbanning a hashtag will allow creating posts with
 filters: Filters
 approved: Approved
 rejected: Rejected
+accepted: Accepted
 add_moderator: Add moderator
 add_badge: Add badge
+follows: Follows
+tags_and_follows: Tags & Follows
+add_follow: Add follow
+magazine_follow_actor: User/Group/Instance handle or URL
+magazine_follow_actor_placeholder: '@user@instance.tld or https://instance.tld/u/user'
+magazine_follow_kind: Filters
+magazine_follow_kind_default: Default for account type
+magazine_follow_kind_create: Posts
+magazine_follow_kind_announce: Boosts, Re-Blogs & Announcements
+magazine_follow_kind_both: Both Kinds
+magazine_follow_kind_help: Boosts, Re-Blogs & Announcements often result in more noise
+  that may publish content which does not fit the topic of this magazine. Use it with
+  care.
 bans: Bans
 created: Created
 expires: Expires
@@ -1092,6 +1123,16 @@ flash_magazine_theme_banner_detached_success: Magazine banner deleted
 federation_authorized_fetch: Require signed ActivityPub fetches (authorized fetch)
 federation_authorized_fetch_help: 'Draft. When enabled, inbound ActivityPub GET requests must carry a valid HTTP signature, and the requesting instance must pass the federation allowlist or ban list. This breaks federation with software that does not sign its GET requests, and it does not hide anything you have already federated out.'
 federation_uses_allowlist: Use allowlist for federation
+federation_read_only: Read only
+federation_mark_read_only: Mark read only
+federation_mark_read_write: Allow sending to this instance
+federation_not_delivered_to: 'Replies will not be shown to %targets% and their community.'
+federation_not_delivered_more: '+%count% more'
+federation_read_only_help: Content from this instance is received as normal, but
+  nothing except the follow handshake and updates of our own profiles is ever sent
+  to it. Replies, boosts, favourites and reports made here are not delivered there.
+  This does not stop that instance from seeing a reply relayed by some other
+  instance we federate with, and it does not apply to activities already delivered.
 defederating_instance: Defederating instance %i
 their_user_follows: Amount of users from their instance following users on our
   instance

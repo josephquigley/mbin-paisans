@@ -15,6 +15,7 @@ use App\PageView\EntryCommentPageView;
 use App\Service\EntryCommentManager;
 use App\Service\IpResolver;
 use App\Service\MentionManager;
+use App\Service\OutboundFederationPolicy;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Form\FormInterface;
@@ -33,6 +34,7 @@ class EntryCommentCreateController extends AbstractController
         private readonly RequestStack $requestStack,
         private readonly IpResolver $ipResolver,
         private readonly MentionManager $mentionManager,
+        private readonly OutboundFederationPolicy $outboundFederationPolicy,
     ) {
     }
 
@@ -102,10 +104,12 @@ class EntryCommentCreateController extends AbstractController
         if ($parent && $this->getUser()->addMentionsEntries) {
             $handle = $this->mentionManager->addHandle([$parent->user->username])[0];
 
-            if ($parent->user !== $this->getUser()) {
-                $dto->body = $handle;
-            } else {
+            // a read only author gets no prefilled handle, since a reply naming them is
+            // never delivered there
+            if ($parent->user === $this->getUser()) {
                 $dto->body .= PHP_EOL;
+            } elseif (!$this->outboundFederationPolicy->isReadOnlyHandle($handle)) {
+                $dto->body = $handle;
             }
 
             if ($parent->mentions) {
@@ -114,7 +118,7 @@ class EntryCommentCreateController extends AbstractController
                     $mentions,
                     fn (string $mention) => $mention !== $handle && $mention !== $this->mentionManager->addHandle(
                         [$this->getUser()->username]
-                    )[0]
+                    )[0] && !$this->outboundFederationPolicy->isReadOnlyHandle($mention)
                 );
 
                 $dto->body .= PHP_EOL.PHP_EOL;

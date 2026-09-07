@@ -13,6 +13,7 @@ class FollowMessage implements ActivityPubOutboxInterface
         public int $followingId,
         public bool $unfollow = false,
         public bool $magazine = false,
+        public bool $followerIsMagazine = false,
     ) {
     }
 }

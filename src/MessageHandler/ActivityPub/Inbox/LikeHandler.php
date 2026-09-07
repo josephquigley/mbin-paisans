@@ -56,7 +56,7 @@ class LikeHandler extends MbinMessageHandler
                 $this->logger->info('[LikeHandler::doWork] Got an adjusted url: {url}, using that instead of {old}', ['url' => $adjustedUrl, 'old' => $message->payload['object']['id'] ?? $message->payload['object']]);
                 $message->payload['object'] = $adjustedUrl;
             }
-            $this->bus->dispatch(new ChainActivityMessage([$object], like: $message->payload));
+            $this->bus->dispatch(new ChainActivityMessage([$object], like: $message->payload, deliveredBy: $message->payload['actor'] ?? null, deliveredKind: 'Create'));
         };
 
         if ('Like' === $message->payload['type']) {
