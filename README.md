@@ -94,6 +94,13 @@ Unofficial magazines:
                 </a>
             </td>
             <td align="center">
+                <a href="https://github.com/josephquigley">
+                    <img src="https://avatars.githubusercontent.com/u/682509?v=4" width="100;" alt="josephquigley"/>
+                    <br />
+                    <sub><b>Joseph Quigley</b></sub>
+                </a>
+            </td>
+            <td align="center">
                 <a href="https://github.com/weblate">
                     <img src="https://avatars.githubusercontent.com/u/1607653?v=4" width="100;" alt="weblate"/>
                     <br />
@@ -105,13 +112,6 @@ Unofficial magazines:
                     <img src="https://avatars.githubusercontent.com/u/146029455?v=4" width="100;" alt="e-five256"/>
                     <br />
                     <sub><b>e-five</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/josephquigley">
-                    <img src="https://avatars.githubusercontent.com/u/682509?v=4" width="100;" alt="josephquigley"/>
-                    <br />
-                    <sub><b>Joseph Quigley</b></sub>
                 </a>
             </td>
 		</tr>
