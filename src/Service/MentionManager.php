@@ -50,9 +50,16 @@ class MentionManager
 
         $subjectActor = ['@'.ltrim($subject->user->username, '@')];
 
+        // The subject's own mentions are deliberately not merged in. The reply
+        // form prefills them, so a member who deletes one from the box means to
+        // drop that account: adding it back here would put a Mention tag on the
+        // reply, and deliver it, to somebody the member removed on purpose.
+        //
+        // The subject's author is different and stays. Prefilling the author is
+        // opt in, and off by default for entries, so inheriting it is what keeps
+        // a reply reaching the person being replied to.
         $result = array_unique(
             array_merge(
-                empty($subject->mentions) ? [] : $subject->mentions,
                 empty($activity->mentions) ? [] : $activity->mentions,
                 $subjectActor
             )
