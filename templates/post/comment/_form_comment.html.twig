@@ -16,6 +16,10 @@
 {% endif %}
 
 <h3 hidden>{{ title }}</h3>
+{% set readOnlyHosts = read_only_reply_notice(post, parent is defined and parent ? parent : null) %}
+{% if readOnlyHosts %}
+    <p class="alert alert__info">{{ 'federation_not_delivered_to'|trans({'%hosts%': readOnlyHosts}) }}</p>
+{% endif %}
 {{ form_start(form, {action: action, attr: {class: edit ? 'comment-edit replace' : 'comment-add'}}) }}
 <div class="row">
     {{ component('editor_toolbar', {id: form.body.vars.id}) }}

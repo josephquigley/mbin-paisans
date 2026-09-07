@@ -17,6 +17,7 @@ use App\Repository\Criteria;
 use App\Repository\ImageRepository;
 use App\Repository\PostCommentRepository;
 use App\Service\MentionManager;
+use App\Service\OutboundFederationPolicy;
 use Pagerfanta\PagerfantaInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
@@ -33,6 +34,7 @@ class PostSingleController extends AbstractController
         private readonly PostCommentRepository $commentRepository,
         private readonly EventDispatcherInterface $dispatcher,
         private readonly MentionManager $mentionManager,
+        private readonly OutboundFederationPolicy $outboundFederationPolicy,
         private readonly Security $security,
         private readonly ImageRepository $imageRepository,
     ) {
@@ -96,7 +98,9 @@ class PostSingleController extends AbstractController
         }
 
         $dto = new PostCommentDto();
-        if ($this->getUser() && $this->getUser()->addMentionsPosts && $post->user !== $this->getUser()) {
+        // see EntrySingleController: a read only author gets no prefilled handle
+        if ($this->getUser() && $this->getUser()->addMentionsPosts && $post->user !== $this->getUser()
+            && !$this->outboundFederationPolicy->isReadOnlyHandle($post->user->username)) {
             $dto->body = $this->mentionManager->addHandle([$post->user->username])[0];
         }
 

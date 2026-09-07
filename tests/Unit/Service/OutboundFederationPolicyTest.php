@@ -155,4 +155,49 @@ class OutboundFederationPolicyTest extends TestCase
 
         self::assertTrue($policy->isReadOnlyInstance('https://www.readonly.example.com/inbox'));
     }
+
+    public function testARemoteHandleOnAReadOnlyInstanceIsReadOnly(): void
+    {
+        self::assertTrue($this->policy(true, true)->isReadOnlyHandle('@someone@readonly.example.com'));
+    }
+
+    public function testARemoteHandleOnAnInstanceThatIsNotReadOnlyIsNot(): void
+    {
+        self::assertFalse($this->policy(true, false)->isReadOnlyHandle('@someone@readonly.example.com'));
+    }
+
+    public function testALocalHandleIsNeverReadOnly(): void
+    {
+        // a local handle carries no host, and nothing local is ever suppressed
+        self::assertFalse($this->policy(true, true)->isReadOnlyHandle('@someone'));
+    }
+
+    public function testAHandleIsNormalisedTheSameWayAnInstanceIs(): void
+    {
+        self::assertTrue($this->policy(true, true)->isReadOnlyHandle('@someone@www.readonly.example.com'));
+    }
+
+    public function testHandlesWithoutAHostAreNotReportedAsHosts(): void
+    {
+        $hosts = $this->policy(true, true)->readOnlyHostsAmong(['@someone', '@other@readonly.example.com']);
+
+        self::assertSame(['readonly.example.com'], $hosts);
+    }
+
+    public function testHostsAreReportedOnceAndSorted(): void
+    {
+        $handles = [
+            '@b@readonly.example.com',
+            '@a@readonly.example.com',
+            '@c@www.readonly.example.com',
+        ];
+
+        // one host, however many handles named it, and www. collapses into the same one
+        self::assertSame(['readonly.example.com'], $this->policy(true, true)->readOnlyHostsAmong($handles));
+    }
+
+    public function testNoHostsWithoutTheAllowList(): void
+    {
+        self::assertSame([], $this->policy(false, true)->readOnlyHostsAmong(['@someone@readonly.example.com']));
+    }
 }
