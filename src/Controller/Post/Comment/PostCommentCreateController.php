@@ -108,28 +108,13 @@ class PostCommentCreateController extends AbstractController
         $dto = new PostCommentDto();
 
         if ($parent && $this->getUser()->addMentionsPosts) {
-            $handle = $this->mentionManager->addHandle([$parent->user->username])[0];
-
-            if ($parent->user !== $this->getUser()) {
-                $dto->body = $handle;
-            } else {
-                $dto->body .= PHP_EOL;
-            }
-
-            if ($parent->mentions) {
-                $mentions = $this->mentionManager->addHandle($parent->mentions);
-                $mentions = array_filter(
-                    $mentions,
-                    fn (string $mention) => $mention !== $handle && $mention !== $this->mentionManager->addHandle([$this->getUser()->username])[0]
-                );
-
-                $dto->body .= PHP_EOL.PHP_EOL;
-                $dto->body .= implode(' ', array_unique($mentions));
-            }
+            $dto->body = $this->mentionManager->prefilledMentions($parent->user, $parent->mentions, $this->getUserOrThrow());
         } elseif ($this->getUser()->addMentionsPosts) {
-            if ($post->user !== $this->getUser()) {
-                $dto->body = $this->mentionManager->addHandle([$post->user->username])[0];
-            }
+            // The post's own mentions belong here for the same reason the
+            // parent comment's do above: handleChain merges them into the
+            // reply on save, so they are addressed whether or not the member
+            // was shown them.
+            $dto->body = $this->mentionManager->prefilledMentions($post->user, $post->mentions, $this->getUserOrThrow());
         }
 
         return $this->createForm(

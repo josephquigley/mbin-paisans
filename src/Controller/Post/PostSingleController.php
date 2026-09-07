@@ -96,8 +96,12 @@ class PostSingleController extends AbstractController
         }
 
         $dto = new PostCommentDto();
-        if ($this->getUser() && $this->getUser()->addMentionsPosts && $post->user !== $this->getUser()) {
-            $dto->body = $this->mentionManager->addHandle([$post->user->username])[0];
+        if ($this->getUser() && $this->getUser()->addMentionsPosts) {
+            // The post's own mentions belong here for the same reason a
+            // parent comment's do when replying to a comment: handleChain
+            // merges them into the reply on save, so they are addressed
+            // whether or not the member was shown them.
+            $dto->body = $this->mentionManager->prefilledMentions($post->user, $post->mentions, $this->getUserOrThrow());
         }
 
         return $this->render(

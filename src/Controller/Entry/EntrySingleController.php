@@ -100,8 +100,12 @@ class EntrySingleController extends AbstractController
         }
 
         $dto = new EntryCommentDto();
-        if ($user && $user->addMentionsEntries && $entry->user !== $user) {
-            $dto->body = $this->mentionManager->addHandle([$entry->user->username])[0];
+        if ($user && $user->addMentionsEntries) {
+            // The entry's own mentions belong here for the same reason a
+            // parent comment's do when replying to a comment: handleChain
+            // merges them into the reply on save, so they are addressed
+            // whether or not the member was shown them.
+            $dto->body = $this->mentionManager->prefilledMentions($entry->user, $entry->mentions, $user);
         }
 
         return $this->render(

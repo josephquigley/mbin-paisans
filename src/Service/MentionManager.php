@@ -147,6 +147,33 @@ class MentionManager
         return $body;
     }
 
+    /**
+     * The handles a reply form is prefilled with: the author of what is being
+     * replied to, then the mentions that subject carries, minus the author
+     * (already there) and minus the member writing the reply.
+     *
+     * One line, single spaces. The reply box puts the cursor at the end of
+     * the first line, so a multi line prefill would strand it in the middle
+     * of the handles.
+     *
+     * @param string[]|null $mentions
+     */
+    public function prefilledMentions(User $subjectAuthor, ?array $mentions, User $replier): string
+    {
+        $authorHandle = $this->addHandle([$subjectAuthor->username])[0];
+        $replierHandle = $this->addHandle([$replier->username])[0];
+
+        $handles = $subjectAuthor === $replier ? [] : [$authorHandle];
+
+        foreach ($this->addHandle($mentions ?? []) as $mention) {
+            if ($mention !== $authorHandle && $mention !== $replierHandle) {
+                $handles[] = $mention;
+            }
+        }
+
+        return implode(' ', array_unique($handles));
+    }
+
     public function addHandle(array $mentions): array
     {
         $res = array_map(
