@@ -17,7 +17,6 @@ use App\PageView\PostCommentPageView;
 use App\Repository\PostCommentRepository;
 use App\Service\IpResolver;
 use App\Service\MentionManager;
-use App\Service\OutboundFederationPolicy;
 use App\Service\PostCommentManager;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -36,7 +35,6 @@ class PostCommentCreateController extends AbstractController
         private readonly PostCommentRepository $repository,
         private readonly IpResolver $ipResolver,
         private readonly MentionManager $mentionManager,
-        private readonly OutboundFederationPolicy $outboundFederationPolicy,
         private readonly Security $security,
     ) {
     }
@@ -110,32 +108,13 @@ class PostCommentCreateController extends AbstractController
         $dto = new PostCommentDto();
 
         if ($parent && $this->getUser()->addMentionsPosts) {
-            $handle = $this->mentionManager->addHandle([$parent->user->username])[0];
-
-            // a read only author gets no prefilled handle, since a reply naming them is
-            // never delivered there
-            if ($parent->user === $this->getUser()) {
-                $dto->body .= PHP_EOL;
-            } elseif (!$this->outboundFederationPolicy->isReadOnlyHandle($handle)) {
-                $dto->body = $handle;
-            }
-
-            if ($parent->mentions) {
-                $mentions = $this->mentionManager->addHandle($parent->mentions);
-                $mentions = array_filter(
-                    $mentions,
-                    fn (string $mention) => $mention !== $handle && $mention !== $this->mentionManager->addHandle([$this->getUser()->username])[0]
-                        && !$this->outboundFederationPolicy->isReadOnlyHandle($mention)
-                );
-
-                $dto->body .= PHP_EOL.PHP_EOL;
-                $dto->body .= implode(' ', array_unique($mentions));
-            }
+            $dto->body = $this->mentionManager->prefilledMentions($parent->user, $parent->mentions, $this->getUserOrThrow());
         } elseif ($this->getUser()->addMentionsPosts) {
-            if ($post->user !== $this->getUser()
-                && !$this->outboundFederationPolicy->isReadOnlyHandle($post->user->username)) {
-                $dto->body = $this->mentionManager->addHandle([$post->user->username])[0];
-            }
+            // The post's own mentions belong here for the same reason the
+            // parent comment's do above: handleChain merges them into the
+            // reply on save, so they are addressed whether or not the member
+            // was shown them.
+            $dto->body = $this->mentionManager->prefilledMentions($post->user, $post->mentions, $this->getUserOrThrow());
         }
 
         return $this->createForm(

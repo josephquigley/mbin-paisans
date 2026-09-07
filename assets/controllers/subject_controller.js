@@ -47,17 +47,13 @@ export default class extends Controller {
             const textarea = this.containerTarget.querySelector('textarea');
             if (textarea) {
                 if ('' !== textarea.value) {
-                    let firstLineEnd = textarea.value.indexOf('\n');
-                    if (-1 === firstLineEnd) {
-                        firstLineEnd = textarea.value.length;
-                        textarea.value = textarea.value.slice(0, firstLineEnd) + ' ' + textarea.value.slice(firstLineEnd);
-                        textarea.selectionStart = firstLineEnd + 1;
-                        textarea.selectionEnd = firstLineEnd + 1;
-                    } else {
-                        textarea.value = textarea.value.slice(0, firstLineEnd) + ' ' + textarea.value.slice(firstLineEnd);
-                        textarea.selectionStart = firstLineEnd + 1;
-                        textarea.selectionEnd = firstLineEnd + 1;
-                    }
+                    // The prefill is the handles this reply will address, so
+                    // the member writes after all of them. Putting the caret
+                    // at the end of the first line stranded it in the middle
+                    // of the list as soon as there was more than one handle.
+                    textarea.value = textarea.value + ' ';
+                    textarea.selectionStart = textarea.value.length;
+                    textarea.selectionEnd = textarea.value.length;
                 }
 
                 textarea.focus();
