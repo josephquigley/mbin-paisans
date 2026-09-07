@@ -22,31 +22,38 @@ class FederationExtensionRuntimeTest extends TestCase
         return new FederationExtensionRuntime($this->createStub(OutboundFederationPolicy::class), $translator);
     }
 
-    public function testNoHostsIsNoNotice(): void
+    public function testNothingToNameIsNoNotice(): void
     {
         self::assertNull($this->runtime()->summarise([]));
     }
 
-    public function testOneHostIsNamedInFull(): void
+    public function testOneTargetIsNamedOnItsOwn(): void
     {
-        self::assertSame('example.com', $this->runtime()->summarise(['example.com']));
+        self::assertSame('@someone@example.com', $this->runtime()->summarise(['@someone@example.com']));
     }
 
-    public function testTwoHostsAreBothNamed(): void
+    public function testTwoTargetsAreJoinedWithOr(): void
     {
-        self::assertSame('a.example.com, b.example.com', $this->runtime()->summarise(['a.example.com', 'b.example.com']));
+        // the shape the notice is written for: the actor, then the instance behind them
+        self::assertSame(
+            '@someone@example.com or example.com',
+            $this->runtime()->summarise(['@someone@example.com', 'example.com']),
+        );
     }
 
-    public function testManyHostsAreCutOffAndCounted(): void
+    public function testManyTargetsAreCutOffAndCounted(): void
     {
-        $hosts = ['a.example.com', 'b.example.com', 'c.example.com', 'd.example.com'];
+        $targets = ['@a@example.com', '@b@example.com', '@c@example.com', 'example.com'];
 
-        self::assertSame('a.example.com, b.example.com federation_not_delivered_more2', $this->runtime()->summarise($hosts));
+        self::assertSame(
+            '@a@example.com or @b@example.com federation_not_delivered_more2',
+            $this->runtime()->summarise($targets),
+        );
     }
 
-    public function testALongHostIsTruncated(): void
+    public function testALongTargetIsTruncated(): void
     {
-        $long = 'a-very-long-hostname-indeed-that-keeps-going.example.com';
+        $long = '@someone@a-very-long-hostname-indeed-that-keeps-going.example.com';
 
         $summary = $this->runtime()->summarise([$long]);
 
@@ -54,7 +61,7 @@ class FederationExtensionRuntimeTest extends TestCase
         self::assertLessThan(\strlen($long), \strlen($summary));
     }
 
-    public function testTruncationDoesNotApplyToAHostThatFits(): void
+    public function testTruncationDoesNotApplyToATargetThatFits(): void
     {
         self::assertStringNotContainsString('…', (string) $this->runtime()->summarise(['short.example.com']));
     }

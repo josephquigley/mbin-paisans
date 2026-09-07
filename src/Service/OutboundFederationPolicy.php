@@ -134,6 +134,31 @@ readonly class OutboundFederationPolicy
         return $hosts;
     }
 
+    /**
+     * The read only handles in a list, once each and in a stable order.
+     *
+     * Beside readOnlyHostsAmong() rather than folded into it: the notice names the actor
+     * and the instance as separate things, because they are separate things to a member.
+     *
+     * @param string[] $handles
+     *
+     * @return string[]
+     */
+    public function readOnlyHandlesAmong(array $handles): array
+    {
+        $found = [];
+        foreach ($handles as $handle) {
+            if ($this->isReadOnlyHandle($handle)) {
+                $found[] = '@'.ltrim($handle, '@');
+            }
+        }
+
+        $found = array_values(array_unique($found));
+        sort($found);
+
+        return $found;
+    }
+
     private function isReadOnlyDomain(string $host): bool
     {
         // the same normalisation SettingsManager::isBannedInstance() applies, so that marking

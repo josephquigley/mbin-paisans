@@ -200,4 +200,19 @@ class OutboundFederationPolicyTest extends TestCase
     {
         self::assertSame([], $this->policy(false, true)->readOnlyHostsAmong(['@someone@readonly.example.com']));
     }
+
+    public function testReadOnlyHandlesAreReportedWithTheirLeadingAt(): void
+    {
+        $handles = ['@someone@readonly.example.com', '@local', '@other@readonly.example.com'];
+
+        self::assertSame(
+            ['@other@readonly.example.com', '@someone@readonly.example.com'],
+            $this->policy(true, true)->readOnlyHandlesAmong($handles),
+        );
+    }
+
+    public function testNoReadOnlyHandlesWithoutTheAllowList(): void
+    {
+        self::assertSame([], $this->policy(false, true)->readOnlyHandlesAmong(['@someone@readonly.example.com']));
+    }
 }

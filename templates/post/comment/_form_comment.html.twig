@@ -16,9 +16,9 @@
 {% endif %}
 
 <h3 hidden>{{ title }}</h3>
-{% set readOnlyHosts = read_only_reply_notice(post, parent is defined and parent ? parent : null) %}
-{% if readOnlyHosts %}
-    <p class="alert alert__info">{{ 'federation_not_delivered_to'|trans({'%hosts%': readOnlyHosts}) }}</p>
+{% set readOnlyTargets = read_only_reply_notice(post, parent is defined and parent ? parent : null) %}
+{% if readOnlyTargets %}
+    <p class="alert alert__info">{{ 'federation_not_delivered_to'|trans({'%magazine%': post.magazine.name, '%targets%': readOnlyTargets}) }}</p>
 {% endif %}
 {{ form_start(form, {action: action, attr: {class: edit ? 'comment-edit replace' : 'comment-add'}}) }}
 <div class="row">

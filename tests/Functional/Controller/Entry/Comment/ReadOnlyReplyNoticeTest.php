@@ -47,7 +47,13 @@ class ReadOnlyReplyNoticeTest extends WebTestCase
         $crawler = $this->client->request('GET', "/m/{$entry->magazine->name}/t/{$entry->getId()}/-");
 
         self::assertResponseIsSuccessful();
-        self::assertStringContainsString('Not delivered to '.self::HOST, $crawler->html());
+        self::assertStringContainsString(
+            'Replies will only be shown to /m/'.$entry->magazine->name.' followers and not to',
+            $crawler->html(),
+        );
+        // the actor and the instance are named as separate things, because they are
+        // separate things to the member reading this
+        self::assertStringContainsString(self::HANDLE.' or '.self::HOST, $crawler->html());
         // the whole point: the box must not hand the member a mention that goes nowhere
         self::assertStringNotContainsString(self::HANDLE, $crawler->filter('textarea')->first()->text());
     }
@@ -63,7 +69,7 @@ class ReadOnlyReplyNoticeTest extends WebTestCase
         $crawler = $this->client->request('GET', "/m/{$entry->magazine->name}/t/{$entry->getId()}/-");
 
         self::assertResponseIsSuccessful();
-        self::assertStringNotContainsString('Not delivered to', $crawler->html());
+        self::assertStringNotContainsString('Replies will only be shown to', $crawler->html());
         self::assertStringContainsString('@local_author', $crawler->filter('textarea')->first()->text());
     }
 }
