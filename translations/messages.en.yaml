@@ -1112,6 +1112,14 @@ flash_magazine_theme_banner_detached_success: Magazine banner deleted
 federation_authorized_fetch: Require signed ActivityPub fetches (authorized fetch)
 federation_authorized_fetch_help: 'Draft. When enabled, inbound ActivityPub GET requests must carry a valid HTTP signature, and the requesting instance must pass the federation allowlist or ban list. This breaks federation with software that does not sign its GET requests, and it does not hide anything you have already federated out.'
 federation_uses_allowlist: Use allowlist for federation
+federation_read_only: Read only
+federation_mark_read_only: Mark read only
+federation_mark_read_write: Allow sending to this instance
+federation_read_only_help: Content from this instance is received as normal, but
+  nothing except the follow handshake and updates of our own profiles is ever sent
+  to it. Replies, boosts, favourites and reports made here are not delivered there.
+  This does not stop that instance from seeing a reply relayed by some other
+  instance we federate with, and it does not apply to activities already delivered.
 defederating_instance: Defederating instance %i
 their_user_follows: Amount of users from their instance following users on our
   instance

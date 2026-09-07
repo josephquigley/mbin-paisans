@@ -13,6 +13,7 @@ readonly class DeliverManager
 {
     public function __construct(
         private SettingsManager $settingsManager,
+        private OutboundFederationPolicy $policy,
         private MessageBusInterface $bus,
         private LoggerInterface $logger,
     ) {
@@ -36,6 +37,14 @@ readonly class DeliverManager
 
             if ($this->settingsManager->isLocalUrl($inboxUrl)) {
                 $this->logger->warning('tried delivering to a local url, {payload}', ['payload' => $activity]);
+                continue;
+            }
+
+            // dropped here rather than in the handler so a fan out that includes a read only
+            // instance does not queue a message only to throw it away. DeliverHandler checks
+            // again, for the call sites that dispatch a DeliverMessage without coming through
+            // this method.
+            if (!$this->policy->mayDeliver($inboxUrl, $activity)) {
                 continue;
             }
 
