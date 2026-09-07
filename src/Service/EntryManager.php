@@ -118,7 +118,10 @@ class EntryManager implements ContentManagerInterface
         if ($entry->url) {
             $entry->url = ($this->urlCleaner)($dto->url);
         }
-        $entry->mentions = $dto->body ? $this->mentionManager->extract($dto->body) : null;
+        $entry->mentions = array_values(array_unique(array_merge(
+            $dto->mentions ?? [],
+            $dto->body ? $this->mentionManager->extract($dto->body) ?? [] : []
+        ))) ?: null;
         $entry->visibility = $dto->visibility;
         $entry->apId = $dto->apId;
         $entry->apLikeCount = $dto->apLikeCount;
@@ -211,7 +214,10 @@ class EntryManager implements ContentManagerInterface
         }
         $this->tagManager->updateEntryTags($entry, $this->tagManager->getTagsFromEntryDto($dto));
 
-        $entry->mentions = $dto->body ? $this->mentionManager->extract($dto->body) : null;
+        $entry->mentions = array_values(array_unique(array_merge(
+            $dto->mentions ?? [],
+            $dto->body ? $this->mentionManager->extract($dto->body) ?? [] : []
+        ))) ?: null;
         $entry->isOc = $dto->isOc;
         $entry->lang = $dto->lang;
         $entry->editedAt = new \DateTimeImmutable('@'.time());

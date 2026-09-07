@@ -97,6 +97,7 @@ class Page extends ActivityPubContent
             }
 
             $dto->body = $this->objectExtractor->getMarkdownBody($object);
+            $dto->mentions = $this->objectExtractor->getMentions($object);
             $dto->visibility = $this->getVisibility($object, $actor);
             $this->extractUrlIntoDto($dto, $object, $actor);
             $this->handleDate($dto, $object['published']);

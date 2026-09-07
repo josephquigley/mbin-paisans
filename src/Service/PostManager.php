@@ -101,7 +101,10 @@ class PostManager implements ContentManagerInterface
         if ($post->image && !$post->image->altText) {
             $post->image->altText = $dto->imageAlt;
         }
-        $post->mentions = $dto->body ? $this->mentionManager->extract($dto->body) : null;
+        $post->mentions = array_values(array_unique(array_merge(
+            $dto->mentions ?? [],
+            $dto->body ? $this->mentionManager->extract($dto->body) ?? [] : []
+        ))) ?: null;
         $post->visibility = $dto->visibility;
         $post->apId = $dto->apId;
         $post->apLikeCount = $dto->apLikeCount;
@@ -155,7 +158,10 @@ class PostManager implements ContentManagerInterface
             $post->image = $this->imageRepository->find($dto->image->id);
         }
         $this->tagManager->updatePostTags($post, $this->tagExtractor->extract($dto->body) ?? []);
-        $post->mentions = $dto->body ? $this->mentionManager->extract($dto->body) : null;
+        $post->mentions = array_values(array_unique(array_merge(
+            $dto->mentions ?? [],
+            $dto->body ? $this->mentionManager->extract($dto->body) ?? [] : []
+        ))) ?: null;
         $post->visibility = $dto->visibility;
         $post->editedAt = new \DateTimeImmutable('@'.time());
         if (empty($post->body) && null === $post->image) {
