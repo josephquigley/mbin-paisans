@@ -85,6 +85,11 @@ magazine_panel_follow_remove:
   path: /m/{magazine_name}/panel/follows/{follow_id}/remove
   methods: [ POST ]
 
+magazine_panel_follow_kind:
+  controller: App\Controller\Magazine\Panel\MagazineFollowController::changeKind
+  path: /m/{magazine_name}/panel/follows/{follow_id}/kind
+  methods: [ POST ]
+
 magazine_panel_trash:
   controller: App\Controller\Magazine\Panel\MagazineTrashController
   path: /m/{name}/panel/trash

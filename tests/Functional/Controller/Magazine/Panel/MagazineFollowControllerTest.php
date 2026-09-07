@@ -81,8 +81,10 @@ class MagazineFollowControllerTest extends WebTestCase
 
         // Load magazine B's own panel first to get a genuine CSRF token for
         // this follow row, minted in the same session as the request below.
+        // Name the form: each row carries a remove form and a kind form, and
+        // their tokens have different ids.
         $crawler = $this->client->request('GET', '/m/other/panel/tags');
-        $token = $crawler->filter('#main .follows-table input[name=token]')->attr('value');
+        $token = $crawler->filter('#main form[name=follow_remove_'.$follow->getId().'] input[name=token]')->attr('value');
 
         $this->client->request(
             'POST',
@@ -118,5 +120,124 @@ class MagazineFollowControllerTest extends WebTestCase
             '.alert__danger',
             'This magazine only accepts posts from moderators'
         );
+    }
+
+    public function testModeratorCanChangeWhatAFollowCarries(): void
+    {
+        $this->client->loginUser($this->getUserByUsername('JohnDoe'));
+        $magazine = $this->getMagazineByName('acme');
+
+        $follow = new MagazineFollow($magazine, $this->getUserByUsername('JaneDoe'));
+        $follow->kind = MagazineFollowKind::Create;
+        $this->entityManager->persist($follow);
+        $this->entityManager->flush();
+        $followId = $follow->getId();
+
+        $crawler = $this->client->request('GET', '/m/acme/panel/tags');
+        $this->client->submit(
+            $crawler->filter('#main form[name=follow_kind_'.$followId.']')->selectButton('Save')->form([
+                'kind' => 'announce',
+            ])
+        );
+
+        $this->assertResponseRedirects('/m/acme/panel/tags');
+        $crawler = $this->client->followRedirect();
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('.alert__success', 'has been updated');
+
+        $this->entityManager->clear();
+        $reloaded = $this->entityManager->getRepository(MagazineFollow::class)->find($followId);
+        $this->assertSame(MagazineFollowKind::Announce, $reloaded->kind);
+    }
+
+    public function testChangingWhatAFollowCarriesLeavesTheFollowItselfAlone(): void
+    {
+        $this->client->loginUser($this->getUserByUsername('JohnDoe'));
+        $magazine = $this->getMagazineByName('acme');
+
+        $follow = new MagazineFollow($magazine, $this->getUserByUsername('JaneDoe'));
+        $follow->kind = MagazineFollowKind::Create;
+        $follow->status = MagazineFollow::STATUS_ACCEPTED;
+        $this->entityManager->persist($follow);
+        $this->entityManager->flush();
+        $followId = $follow->getId();
+
+        $crawler = $this->client->request('GET', '/m/acme/panel/tags');
+        $this->client->submit(
+            $crawler->filter('#main form[name=follow_kind_'.$followId.']')->selectButton('Save')->form([
+                'kind' => 'both',
+            ])
+        );
+
+        $this->entityManager->clear();
+        $reloaded = $this->entityManager->getRepository(MagazineFollow::class)->find($followId);
+
+        // The kind is a local filter over what already arrives, so the follow on
+        // the remote side does not change. Re-following (an Undo plus a fresh
+        // Follow) would send traffic the followed instance has to answer and
+        // would drop an accepted follow back to pending for no reason.
+        $this->assertSame(MagazineFollow::STATUS_ACCEPTED, $reloaded->status);
+        $this->assertSame(MagazineFollowKind::Both, $reloaded->kind);
+    }
+
+    public function testAnUnrecognisedKindLeavesTheFollowAlone(): void
+    {
+        $this->client->loginUser($this->getUserByUsername('JohnDoe'));
+        $magazine = $this->getMagazineByName('acme');
+
+        $follow = new MagazineFollow($magazine, $this->getUserByUsername('JaneDoe'));
+        $follow->kind = MagazineFollowKind::Create;
+        $this->entityManager->persist($follow);
+        $this->entityManager->flush();
+        $followId = $follow->getId();
+
+        $crawler = $this->client->request('GET', '/m/acme/panel/tags');
+        $token = $crawler->filter('#main form[name=follow_kind_'.$followId.'] input[name=token]')->attr('value');
+
+        $this->client->request(
+            'POST',
+            '/m/acme/panel/follows/'.$followId.'/kind',
+            ['token' => $token, 'kind' => 'sideways']
+        );
+
+        $this->assertResponseRedirects('/m/acme/panel/tags');
+        $crawler = $this->client->followRedirect();
+
+        $this->assertSelectorTextContains('.alert__danger', 'not a kind of activity');
+
+        $this->entityManager->clear();
+        $reloaded = $this->entityManager->getRepository(MagazineFollow::class)->find($followId);
+        $this->assertSame(MagazineFollowKind::Create, $reloaded->kind);
+    }
+
+    public function testChangingAFollowBelongingToAnotherMagazineIsRefused(): void
+    {
+        $this->client->loginUser($this->getUserByUsername('JohnDoe'));
+        $this->getMagazineByName('acme');
+        $magazineB = $this->getMagazineByName('other', $this->getUserByUsername('JohnDoe'));
+
+        $follow = new MagazineFollow($magazineB, $this->getUserByUsername('JaneDoe'));
+        $follow->kind = MagazineFollowKind::Create;
+        $this->entityManager->persist($follow);
+        $this->entityManager->flush();
+        $followId = $follow->getId();
+
+        // Mint the token on magazine B's own panel, so what the request below
+        // fails on is the magazine mismatch and not an invalid CSRF token.
+        $crawler = $this->client->request('GET', '/m/other/panel/tags');
+        $token = $crawler->filter('#main form[name=follow_kind_'.$followId.'] input[name=token]')->attr('value');
+
+        $this->client->request(
+            'POST',
+            '/m/acme/panel/follows/'.$followId.'/kind',
+            ['token' => $token, 'kind' => 'announce']
+        );
+
+        $this->assertResponseStatusCodeSame(403);
+
+        $this->entityManager->clear();
+        $reloaded = $this->entityManager->getRepository(MagazineFollow::class)->find($followId);
+        $this->assertSame(MagazineFollowKind::Create, $reloaded->kind);
     }
 }

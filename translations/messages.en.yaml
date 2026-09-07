@@ -291,6 +291,9 @@ flash_magazine_follow_restricted_error: This magazine only accepts posts from
   restricted to moderators" first.
 flash_magazine_follow_local_actor_error: That actor is local to this instance
   and cannot be followed here.
+flash_magazine_follow_kind_success: What this follow carries has been updated.
+flash_magazine_follow_kind_invalid_error: That is not a kind of activity a follow
+  can carry, so nothing was changed.
 flash_mark_as_adult_success: The post has been successfully marked as NSFW.
 flash_unmark_as_adult_success: The post has been successfully unmarked as NSFW.
 too_many_requests: Limit exceeded, please try again later.
