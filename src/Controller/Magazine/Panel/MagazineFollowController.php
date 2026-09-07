@@ -83,6 +83,44 @@ class MagazineFollowController extends AbstractController
         return $this->redirectToRoute('magazine_panel_tags', ['name' => $magazine->name]);
     }
 
+    #[IsGranted('ROLE_USER')]
+    #[IsGranted('moderate', subject: 'magazine')]
+    public function changeKind(
+        #[MapEntity(mapping: ['magazine_name' => 'name'])]
+        Magazine $magazine,
+        #[MapEntity(id: 'follow_id')]
+        MagazineFollow $follow,
+        Request $request,
+    ): Response {
+        $this->validateCsrf('magazine_follow_kind', $request->getPayload()->get('token'));
+
+        if ($follow->magazine !== $magazine) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $kind = MagazineFollowKind::tryFrom((string) $request->request->get('kind'));
+
+        if (null === $kind) {
+            // Unlike the add form, an empty choice is not "default for the actor
+            // type" here: that default was already applied when the follow was
+            // made, and re-deriving it would quietly undo a moderator's earlier
+            // choice. So an unset or unrecognised value changes nothing.
+            $this->addFlash('error', 'flash_magazine_follow_kind_invalid_error');
+
+            return $this->redirectToRoute('magazine_panel_tags', ['name' => $magazine->name]);
+        }
+
+        // No federation traffic. The kind filters what an already-delivered
+        // activity does locally, so the follow on the remote side is unchanged
+        // and an Undo plus a fresh Follow would only reset it to pending.
+        $follow->kind = $kind;
+        $this->entityManager->flush();
+
+        $this->addFlash('success', 'flash_magazine_follow_kind_success');
+
+        return $this->redirectToRoute('magazine_panel_tags', ['name' => $magazine->name]);
+    }
+
     private function add(Magazine $magazine, string $actorInput, ?MagazineFollowKind $kind = null): void
     {
         if ($magazine->postingRestrictedToMods) {
