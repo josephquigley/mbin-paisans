@@ -18,7 +18,6 @@ use App\Repository\Criteria;
 use App\Repository\EntryCommentRepository;
 use App\Repository\ImageRepository;
 use App\Service\MentionManager;
-use App\Service\OutboundFederationPolicy;
 use Doctrine\ORM\EntityManagerInterface;
 use Pagerfanta\PagerfantaInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -39,7 +38,6 @@ class EntrySingleController extends AbstractController
         private readonly EntryCommentRepository $commentRepository,
         private readonly EventDispatcherInterface $dispatcher,
         private readonly MentionManager $mentionManager,
-        private readonly OutboundFederationPolicy $outboundFederationPolicy,
         private readonly LoggerInterface $logger,
         private readonly EntityManagerInterface $entityManager,
     ) {
@@ -102,11 +100,12 @@ class EntrySingleController extends AbstractController
         }
 
         $dto = new EntryCommentDto();
-        // no prefilled handle for an author we would never deliver to: the box would be
-        // teaching the member to address a host that never receives it
-        if ($user && $user->addMentionsEntries && $entry->user !== $user
-            && !$this->outboundFederationPolicy->isReadOnlyHandle($entry->user->username)) {
-            $dto->body = $this->mentionManager->addHandle([$entry->user->username])[0];
+        if ($user && $user->addMentionsEntries) {
+            // The entry's own mentions belong here for the same reason a
+            // parent comment's do when replying to a comment: handleChain
+            // merges them into the reply on save, so they are addressed
+            // whether or not the member was shown them.
+            $dto->body = $this->mentionManager->prefilledMentions($entry->user, $entry->mentions, $user);
         }
 
         return $this->render(
