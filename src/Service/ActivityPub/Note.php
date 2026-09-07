@@ -145,6 +145,7 @@ class Note extends ActivityPubContent
             if ($media = $this->objectExtractor->getExternalMediaBody($object)) {
                 $dto->body .= $media;
             }
+            $dto->mentions = $this->objectExtractor->getMentions($object);
 
             $dto->visibility = $this->getVisibility($object, $actor);
             $this->handleDate($dto, $object['published']);
@@ -206,6 +207,7 @@ class Note extends ActivityPubContent
             if ($media = $this->objectExtractor->getExternalMediaBody($object)) {
                 $dto->body .= $media;
             }
+            $dto->mentions = $this->objectExtractor->getMentions($object);
 
             $dto->visibility = $this->getVisibility($object, $actor);
             $this->handleDate($dto, $object['published']);
@@ -271,6 +273,7 @@ class Note extends ActivityPubContent
             if ($media = $this->objectExtractor->getExternalMediaBody($object)) {
                 $dto->body .= $media;
             }
+            $dto->mentions = $this->objectExtractor->getMentions($object);
 
             $dto->visibility = $this->getVisibility($object, $actor);
             $this->handleDate($dto, $object['published']);

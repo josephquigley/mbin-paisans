@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Service\ActivityPub;
 
+use App\Entity\Magazine;
+use App\Entity\User;
 use App\Service\ActivityPubManager;
+use App\Service\MentionManager;
 
 class ApObjectExtractor
 {
@@ -13,7 +16,60 @@ class ApObjectExtractor
     public function __construct(
         private readonly MarkdownConverter $markdownConverter,
         private readonly ActivityPubManager $activityPubManager,
+        private readonly MentionManager $mentionManager,
     ) {
+    }
+
+    /**
+     * Extract the mentions an object addresses in its `tag` array.
+     *
+     * The body is not the only place a mention can live. An object addresses
+     * an actor by carrying a Mention tag for it, and whether the handle also
+     * appears in the content is a rendering choice of the sending software.
+     * Mastodon and GoToSocial both send mentions that appear in no text, and
+     * Mbin does the same: MentionManager::handleChain adds the parent's
+     * mentions and the parent's author to a reply, and MentionsWrapper::build
+     * emits a Mention tag for each of them whether or not the author typed
+     * one.
+     *
+     * MarkdownConverter reads the same tag array, but only to resolve a link
+     * that the content already contains, so a mention named nowhere in the
+     * body is lost there.
+     *
+     * A tag whose actor cannot be resolved is skipped: an address nothing can
+     * be delivered to is of no use to a reply that would inherit it.
+     *
+     * @param array<string, mixed> $object
+     *
+     * @return string[]|null
+     */
+    public function getMentions(array $object): ?array
+    {
+        $tags = $object['tag'] ?? [];
+        if (!\is_array($tags)) {
+            return null;
+        }
+
+        $mentions = [];
+        foreach ($tags as $tag) {
+            if (!\is_array($tag) || 'Mention' !== ($tag['type'] ?? null) || empty($tag['href'])) {
+                continue;
+            }
+
+            try {
+                $actor = $this->activityPubManager->findActorOrCreate($tag['href']);
+            } catch (\Throwable) {
+                continue;
+            }
+
+            if ($actor instanceof User) {
+                $mentions[] = $this->mentionManager->getUsername($actor->username, true);
+            } elseif ($actor instanceof Magazine) {
+                $mentions[] = $this->mentionManager->getUsername('@'.$actor->name, true);
+            }
+        }
+
+        return \count($mentions) ? array_values(array_unique($mentions)) : null;
     }
 
     public function getMarkdownBody(array $object): ?string
