@@ -82,6 +82,57 @@ readonly class OutboundFederationPolicy
             return true;
         }
 
+        return $this->isReadOnlyDomain($host);
+    }
+
+    /**
+     * Whether a mention handle names an actor on a read only instance.
+     *
+     * A local handle is "@name" and carries no host, so it is never read only. A remote
+     * one is "@name@host", and the host is the part after the last "@" rather than the
+     * second field, because a username may itself contain one.
+     */
+    public function isReadOnlyHandle(string $handle): bool
+    {
+        if (!$this->settingsManager->getUseAllowList()) {
+            return false;
+        }
+
+        $at = strrpos(ltrim($handle, '@'), '@');
+        if (false === $at) {
+            return false;
+        }
+
+        return $this->isReadOnlyDomain(substr(ltrim($handle, '@'), $at + 1));
+    }
+
+    /**
+     * The read only handles in a list, once each and in a stable order.
+     *
+     * The handle is what the notice shows, and it already carries the host, so there is
+     * no separate accessor for hosts: one would only ever restate what these say.
+     *
+     * @param string[] $handles
+     *
+     * @return string[]
+     */
+    public function readOnlyHandlesAmong(array $handles): array
+    {
+        $found = [];
+        foreach ($handles as $handle) {
+            if ($this->isReadOnlyHandle($handle)) {
+                $found[] = '@'.ltrim($handle, '@');
+            }
+        }
+
+        $found = array_values(array_unique($found));
+        sort($found);
+
+        return $found;
+    }
+
+    private function isReadOnlyDomain(string $host): bool
+    {
         // the same normalisation SettingsManager::isBannedInstance() applies, so that marking
         // example.org covers www.example.org exactly as banning it would
         $domain = str_replace('www.', '', $host);

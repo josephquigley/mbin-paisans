@@ -155,4 +155,47 @@ class OutboundFederationPolicyTest extends TestCase
 
         self::assertTrue($policy->isReadOnlyInstance('https://www.readonly.example.com/inbox'));
     }
+
+    public function testARemoteHandleOnAReadOnlyInstanceIsReadOnly(): void
+    {
+        self::assertTrue($this->policy(true, true)->isReadOnlyHandle('@someone@readonly.example.com'));
+    }
+
+    public function testARemoteHandleOnAnInstanceThatIsNotReadOnlyIsNot(): void
+    {
+        self::assertFalse($this->policy(true, false)->isReadOnlyHandle('@someone@readonly.example.com'));
+    }
+
+    public function testALocalHandleIsNeverReadOnly(): void
+    {
+        // a local handle carries no host, and nothing local is ever suppressed
+        self::assertFalse($this->policy(true, true)->isReadOnlyHandle('@someone'));
+    }
+
+    public function testAHandleIsNormalisedTheSameWayAnInstanceIs(): void
+    {
+        self::assertTrue($this->policy(true, true)->isReadOnlyHandle('@someone@www.readonly.example.com'));
+    }
+
+    public function testReadOnlyHandlesAreReportedWithTheirLeadingAt(): void
+    {
+        $handles = ['@someone@readonly.example.com', '@local', '@other@readonly.example.com'];
+
+        self::assertSame(
+            ['@other@readonly.example.com', '@someone@readonly.example.com'],
+            $this->policy(true, true)->readOnlyHandlesAmong($handles),
+        );
+    }
+
+    public function testNoReadOnlyHandlesWithoutTheAllowList(): void
+    {
+        self::assertSame([], $this->policy(false, true)->readOnlyHandlesAmong(['@someone@readonly.example.com']));
+    }
+
+    public function testAHandleNamedTwiceIsReportedOnce(): void
+    {
+        $handles = ['@someone@readonly.example.com', '@someone@readonly.example.com'];
+
+        self::assertSame(['@someone@readonly.example.com'], $this->policy(true, true)->readOnlyHandlesAmong($handles));
+    }
 }
