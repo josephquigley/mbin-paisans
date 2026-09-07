@@ -47,10 +47,7 @@ class ReadOnlyReplyNoticeTest extends WebTestCase
         $crawler = $this->client->request('GET', "/m/{$entry->magazine->name}/t/{$entry->getId()}/-");
 
         self::assertResponseIsSuccessful();
-        self::assertStringContainsString(
-            'Replies will only be shown to /m/'.$entry->magazine->name.' followers and not to',
-            $crawler->html(),
-        );
+        self::assertStringContainsString('Replies will not be shown to', $crawler->html());
         // the handle already carries the host, so the host is never named a second time
         self::assertStringContainsString(self::HANDLE.' and their community', $crawler->html());
         self::assertStringNotContainsString(self::HANDLE.' or '.self::HOST, $crawler->html());
@@ -69,7 +66,7 @@ class ReadOnlyReplyNoticeTest extends WebTestCase
         $crawler = $this->client->request('GET', "/m/{$entry->magazine->name}/t/{$entry->getId()}/-");
 
         self::assertResponseIsSuccessful();
-        self::assertStringNotContainsString('Replies will only be shown to', $crawler->html());
+        self::assertStringNotContainsString('Replies will not be shown to', $crawler->html());
         self::assertStringContainsString('@local_author', $crawler->filter('textarea')->first()->text());
     }
 }

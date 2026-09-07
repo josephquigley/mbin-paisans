@@ -18,7 +18,7 @@
 <h3 hidden>{{ title }}</h3>
 {% set readOnlyTargets = read_only_reply_notice(post, parent is defined and parent ? parent : null) %}
 {% if readOnlyTargets %}
-    <p class="alert alert__info">{{ 'federation_not_delivered_to'|trans({'%magazine%': post.magazine.name, '%targets%': readOnlyTargets}) }}</p>
+    <p class="alert alert__info">{{ 'federation_not_delivered_to'|trans({'%targets%': readOnlyTargets}) }}</p>
 {% endif %}
 {{ form_start(form, {action: action, attr: {class: edit ? 'comment-edit replace' : 'comment-add'}}) }}
 <div class="row">
