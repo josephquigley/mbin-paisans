@@ -32,21 +32,21 @@ class FederationExtensionRuntimeTest extends TestCase
         self::assertSame('@someone@example.com', $this->runtime()->summarise(['@someone@example.com']));
     }
 
-    public function testTwoTargetsAreJoinedWithOr(): void
+    public function testTwoTargetsAreJoinedWithCommas(): void
     {
-        // the shape the notice is written for: the actor, then the instance behind them
+        // no conjunction here: the sentence this sits in supplies its own
         self::assertSame(
-            '@someone@example.com or example.com',
-            $this->runtime()->summarise(['@someone@example.com', 'example.com']),
+            '@someone@example.com, @other@example.com',
+            $this->runtime()->summarise(['@someone@example.com', '@other@example.com']),
         );
     }
 
     public function testManyTargetsAreCutOffAndCounted(): void
     {
-        $targets = ['@a@example.com', '@b@example.com', '@c@example.com', 'example.com'];
+        $targets = ['@a@example.com', '@b@example.com', '@c@example.com', '@d@example.com'];
 
         self::assertSame(
-            '@a@example.com or @b@example.com federation_not_delivered_more2',
+            '@a@example.com, @b@example.com federation_not_delivered_more2',
             $this->runtime()->summarise($targets),
         );
     }
@@ -63,6 +63,6 @@ class FederationExtensionRuntimeTest extends TestCase
 
     public function testTruncationDoesNotApplyToATargetThatFits(): void
     {
-        self::assertStringNotContainsString('…', (string) $this->runtime()->summarise(['short.example.com']));
+        self::assertStringNotContainsString('…', (string) $this->runtime()->summarise(['@a@short.example.com']));
     }
 }

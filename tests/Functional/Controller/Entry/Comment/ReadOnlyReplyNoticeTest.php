@@ -51,9 +51,9 @@ class ReadOnlyReplyNoticeTest extends WebTestCase
             'Replies will only be shown to /m/'.$entry->magazine->name.' followers and not to',
             $crawler->html(),
         );
-        // the actor and the instance are named as separate things, because they are
-        // separate things to the member reading this
-        self::assertStringContainsString(self::HANDLE.' or '.self::HOST, $crawler->html());
+        // the handle already carries the host, so the host is never named a second time
+        self::assertStringContainsString(self::HANDLE.' and their community', $crawler->html());
+        self::assertStringNotContainsString(self::HANDLE.' or '.self::HOST, $crawler->html());
         // the whole point: the box must not hand the member a mention that goes nowhere
         self::assertStringNotContainsString(self::HANDLE, $crawler->filter('textarea')->first()->text());
     }

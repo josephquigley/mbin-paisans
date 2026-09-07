@@ -177,30 +177,6 @@ class OutboundFederationPolicyTest extends TestCase
         self::assertTrue($this->policy(true, true)->isReadOnlyHandle('@someone@www.readonly.example.com'));
     }
 
-    public function testHandlesWithoutAHostAreNotReportedAsHosts(): void
-    {
-        $hosts = $this->policy(true, true)->readOnlyHostsAmong(['@someone', '@other@readonly.example.com']);
-
-        self::assertSame(['readonly.example.com'], $hosts);
-    }
-
-    public function testHostsAreReportedOnceAndSorted(): void
-    {
-        $handles = [
-            '@b@readonly.example.com',
-            '@a@readonly.example.com',
-            '@c@www.readonly.example.com',
-        ];
-
-        // one host, however many handles named it, and www. collapses into the same one
-        self::assertSame(['readonly.example.com'], $this->policy(true, true)->readOnlyHostsAmong($handles));
-    }
-
-    public function testNoHostsWithoutTheAllowList(): void
-    {
-        self::assertSame([], $this->policy(false, true)->readOnlyHostsAmong(['@someone@readonly.example.com']));
-    }
-
     public function testReadOnlyHandlesAreReportedWithTheirLeadingAt(): void
     {
         $handles = ['@someone@readonly.example.com', '@local', '@other@readonly.example.com'];
@@ -214,5 +190,12 @@ class OutboundFederationPolicyTest extends TestCase
     public function testNoReadOnlyHandlesWithoutTheAllowList(): void
     {
         self::assertSame([], $this->policy(false, true)->readOnlyHandlesAmong(['@someone@readonly.example.com']));
+    }
+
+    public function testAHandleNamedTwiceIsReportedOnce(): void
+    {
+        $handles = ['@someone@readonly.example.com', '@someone@readonly.example.com'];
+
+        self::assertSame(['@someone@readonly.example.com'], $this->policy(true, true)->readOnlyHandlesAmong($handles));
     }
 }

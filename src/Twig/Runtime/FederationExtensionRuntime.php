@@ -58,10 +58,10 @@ class FederationExtensionRuntime implements RuntimeExtensionInterface
             }
         }
 
-        return $this->summarise(array_merge(
-            $this->policy->readOnlyHandlesAmong($handles),
-            $this->policy->readOnlyHostsAmong($handles),
-        ));
+        // handles only, deliberately. A handle already displays its host, and every host
+        // we could name here is derived from one of these handles, so naming the host
+        // separately would say the same thing twice.
+        return $this->summarise($this->policy->readOnlyHandlesAmong($handles));
     }
 
     /**
@@ -86,12 +86,11 @@ class FederationExtensionRuntime implements RuntimeExtensionInterface
             \array_slice($targets, 0, self::MAX_TARGETS)
         );
 
-        // "a or b" rather than "a, b": the sentence reads as a list of who will not see
-        // this, and the last one needs the conjunction to land
-        $last = array_pop($shown);
-        $summary = $shown ? implode(', ', $shown).' or '.$last : $last;
+        // plain commas, no conjunction: the sentence this drops into already ends with
+        // "and their community", so an "or" here would collide with it
+        $summary = implode(', ', $shown);
 
-        $remaining = \count($targets) - (\count($shown) + 1);
+        $remaining = \count($targets) - \count($shown);
         if ($remaining > 0) {
             $summary .= ' '.$this->translator->trans('federation_not_delivered_more', ['%count%' => $remaining]);
         }

@@ -107,38 +107,10 @@ readonly class OutboundFederationPolicy
     }
 
     /**
-     * The read only hosts named by a list of handles, once each and in a stable order.
-     *
-     * Deduplicated because the notice this feeds names instances, not people: three
-     * handles on one host are one thing a member needs to be told.
-     *
-     * @param string[] $handles
-     *
-     * @return string[]
-     */
-    public function readOnlyHostsAmong(array $handles): array
-    {
-        $hosts = [];
-        foreach ($handles as $handle) {
-            if (!$this->isReadOnlyHandle($handle)) {
-                continue;
-            }
-
-            $at = strrpos(ltrim($handle, '@'), '@');
-            $hosts[] = str_replace('www.', '', substr(ltrim($handle, '@'), $at + 1));
-        }
-
-        $hosts = array_values(array_unique($hosts));
-        sort($hosts);
-
-        return $hosts;
-    }
-
-    /**
      * The read only handles in a list, once each and in a stable order.
      *
-     * Beside readOnlyHostsAmong() rather than folded into it: the notice names the actor
-     * and the instance as separate things, because they are separate things to a member.
+     * The handle is what the notice shows, and it already carries the host, so there is
+     * no separate accessor for hosts: one would only ever restate what these say.
      *
      * @param string[] $handles
      *

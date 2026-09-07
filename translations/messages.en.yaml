@@ -1123,7 +1123,7 @@ federation_uses_allowlist: Use allowlist for federation
 federation_read_only: Read only
 federation_mark_read_only: Mark read only
 federation_mark_read_write: Allow sending to this instance
-federation_not_delivered_to: 'Replies will only be shown to /m/%magazine% followers and not to %targets%'
+federation_not_delivered_to: 'Replies will only be shown to /m/%magazine% followers and not to %targets% and their community'
 federation_not_delivered_more: '+%count% more'
 federation_read_only_help: Content from this instance is received as normal, but
   nothing except the follow handshake and updates of our own profiles is ever sent
