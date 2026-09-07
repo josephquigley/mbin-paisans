@@ -7,6 +7,7 @@ namespace App\Repository;
 use App\Entity\Magazine;
 use App\Entity\MagazineFollow;
 use App\Entity\User;
+use App\Enum\MagazineFollowKind;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -26,7 +27,7 @@ class MagazineFollowRepository extends ServiceEntityRepository
      * Both actor tables are checked because Mbin stores a Group actor as a
      * Magazine and every other actor type as a User.
      */
-    public function findMagazineFollowing(?string $actorUrl): ?Magazine
+    public function findMagazineFollowing(?string $actorUrl, ?string $activityType = null): ?Magazine
     {
         if (null === $actorUrl) {
             return null;
@@ -36,11 +37,24 @@ class MagazineFollowRepository extends ServiceEntityRepository
         // unique indexes are scoped per magazine. When that happens, the first
         // magazine to have claimed the actor wins, so the ordering below must
         // be stable.
-        $result = $this->createQueryBuilder('mf')
+        $qb = $this->createQueryBuilder('mf')
             ->leftJoin('mf.followingUser', 'u')
             ->leftJoin('mf.followingMagazine', 'm')
             ->where('u.apProfileId = :url OR m.apProfileId = :url')
-            ->setParameter('url', $actorUrl)
+            ->setParameter('url', $actorUrl);
+
+        if (null !== $activityType) {
+            // A follow that does not carry this kind does not answer, and the object then
+            // takes the normal unrouted path. Filing it under the magazine anyway would
+            // deliver exactly what its moderator asked not to receive.
+            $qb->andWhere('mf.kind IN (:kinds)')
+                ->setParameter('kinds', array_values(array_filter(
+                    MagazineFollowKind::cases(),
+                    fn (MagazineFollowKind $kind) => $kind->carries($activityType)
+                )));
+        }
+
+        $result = $qb
             ->orderBy('mf.createdAt', 'ASC')
             ->addOrderBy('mf.id', 'ASC')
             ->setMaxResults(1)

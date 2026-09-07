@@ -7,6 +7,7 @@ namespace App\Controller\Magazine\Panel;
 use App\Controller\AbstractController;
 use App\Entity\Magazine;
 use App\Entity\MagazineFollow;
+use App\Enum\MagazineFollowKind;
 use App\Message\ActivityPub\Outbox\FollowMessage;
 use App\Repository\MagazineFollowRepository;
 use App\Service\ActivityPubManager;
@@ -41,7 +42,11 @@ class MagazineFollowController extends AbstractController
         if ($request->isMethod('POST')) {
             $this->validateCsrf('magazine_follow_add', $request->getPayload()->get('token'));
 
-            $this->add($magazine, trim((string) $request->request->get('actor')));
+            $this->add(
+                $magazine,
+                trim((string) $request->request->get('actor')),
+                MagazineFollowKind::tryFrom((string) $request->request->get('kind')),
+            );
         }
 
         return $this->redirectToRoute('magazine_panel_tags', ['name' => $magazine->name]);
@@ -78,7 +83,7 @@ class MagazineFollowController extends AbstractController
         return $this->redirectToRoute('magazine_panel_tags', ['name' => $magazine->name]);
     }
 
-    private function add(Magazine $magazine, string $actorInput): void
+    private function add(Magazine $magazine, string $actorInput, ?MagazineFollowKind $kind = null): void
     {
         if ($magazine->postingRestrictedToMods) {
             $this->addFlash('error', 'flash_magazine_follow_restricted_error');
@@ -156,6 +161,11 @@ class MagazineFollowController extends AbstractController
         }
 
         $follow = new MagazineFollow($magazine, $actor);
+        // the constructor picks a default from the actor's type, so an unset or
+        // unrecognised choice keeps that rather than overriding it with a guess
+        if (null !== $kind) {
+            $follow->kind = $kind;
+        }
         $this->entityManager->persist($follow);
         $this->entityManager->flush();
 

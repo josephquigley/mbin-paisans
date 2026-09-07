@@ -72,7 +72,7 @@ class ChainActivityHandler extends MbinMessageHandler
             return;
         }
         try {
-            $entity = $this->retrieveObject($object['id']);
+            $entity = $this->retrieveObject($object['id'], $message->deliveredBy, $message->deliveredKind);
         } catch (InstanceBannedException) {
             $this->logger->info('[ChainActivityHandler::doWork] The instance is banned, url: {url}', ['url' => $object['id']]);
 
@@ -101,7 +101,7 @@ class ChainActivityHandler extends MbinMessageHandler
     /**
      * @throws \Exception if there was an unexpected exception
      */
-    private function retrieveObject(string $apUrl): Entry|EntryComment|Post|PostComment|null
+    private function retrieveObject(string $apUrl, ?string $deliveredBy = null, ?string $deliveredKind = null): Entry|EntryComment|Post|PostComment|null
     {
         if ($this->settingsManager->isBannedInstance($apUrl)) {
             throw new InstanceBannedException();
@@ -123,7 +123,7 @@ class ChainActivityHandler extends MbinMessageHandler
                 $parentUrl = \is_string($object['inReplyTo']) ? $object['inReplyTo'] : $object['inReplyTo']['id'];
                 $meta = $this->repository->findByObjectId($parentUrl);
                 if (!$meta) {
-                    $this->retrieveObject($parentUrl);
+                    $this->retrieveObject($parentUrl, $deliveredBy, $deliveredKind);
                 }
                 $meta = $this->repository->findByObjectId($parentUrl);
                 if (!$meta) {
@@ -138,13 +138,13 @@ class ChainActivityHandler extends MbinMessageHandler
                 case 'Note':
                     $this->logger->debug('[ChainActivityHandler::retrieveObject] Creating note {o}', ['o' => $object]);
 
-                    return $this->note->create($object);
+                    return $this->note->create($object, deliveredBy: $deliveredBy, activityType: $deliveredKind);
                 case 'Page':
                 case 'Article':
                 case 'Video':
                     $this->logger->debug('[ChainActivityHandler::retrieveObject] Creating page {o}', ['o' => $object]);
 
-                    return $this->page->create($object);
+                    return $this->page->create($object, deliveredBy: $deliveredBy, activityType: $deliveredKind);
                 default:
                     $this->logger->warning('[ChainActivityHandler::retrieveObject] Could not create an object from type {t} on {url}: {o}', ['t' => $object['type'], 'url' => $apUrl, 'o' => $object]);
             }

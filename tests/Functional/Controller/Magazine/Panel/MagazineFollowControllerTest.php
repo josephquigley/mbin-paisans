@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Functional\Controller\Magazine\Panel;
 
 use App\Entity\MagazineFollow;
+use App\Enum\MagazineFollowKind;
 use App\Tests\WebTestCase;
 
 class MagazineFollowControllerTest extends WebTestCase
@@ -50,6 +51,22 @@ class MagazineFollowControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('.alert__danger', "That doesn't look like an actor.");
+    }
+
+    public function testTheFollowListShowsWhatEachFollowCarries(): void
+    {
+        $this->client->loginUser($this->getUserByUsername('JohnDoe'));
+        $magazine = $this->getMagazineByName('acme');
+
+        $follow = new MagazineFollow($magazine, $this->getUserByUsername('JaneDoe'));
+        $follow->kind = MagazineFollowKind::Announce;
+        $this->entityManager->persist($follow);
+        $this->entityManager->flush();
+
+        $this->client->request('GET', '/m/acme/panel/tags');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('#main .follows-table', 'Boosts, Re-Blogs & Announcements');
     }
 
     public function testRemovingFollowFromAnotherMagazineIsRefused(): void

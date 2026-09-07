@@ -58,7 +58,7 @@ class Note extends ActivityPubContent
      * @throws NoMagazineFoundException if the object could not be routed to any magazine, including the 'random' fallback
      * @throws \Exception
      */
-    public function create(array $object, ?array $root = null, bool $stickyIt = false): EntryComment|PostComment|Post
+    public function create(array $object, ?array $root = null, bool $stickyIt = false, ?string $deliveredBy = null, ?string $activityType = null): EntryComment|PostComment|Post
     {
         // First try to find the activity object in the database
         $current = $this->repository->findByObjectId($object['id']);
@@ -105,7 +105,7 @@ class Note extends ActivityPubContent
             }
         }
 
-        return $this->createPost($object, $stickyIt);
+        return $this->createPost($object, $stickyIt, $deliveredBy, $activityType);
     }
 
     /**
@@ -178,10 +178,10 @@ class Note extends ActivityPubContent
      * @throws UserBannedException
      * @throws NoMagazineFoundException if the object could not be routed to any magazine, including the 'random' fallback
      */
-    private function createPost(array $object, bool $stickyIt = false): Post
+    private function createPost(array $object, bool $stickyIt = false, ?string $deliveredBy = null, ?string $activityType = null): Post
     {
         $dto = new PostDto();
-        $dto->magazine = $this->activityPubManager->findOrCreateMagazineByToCCAndAudience($object);
+        $dto->magazine = $this->activityPubManager->findOrCreateMagazineByToCCAndAudience($object, $deliveredBy, $activityType);
         if (null === $dto->magazine) {
             $this->logger->warning('Could not resolve a magazine for object {o} and no "random" magazine exists to fall back to, dropping it', ['o' => $object['id']]);
             throw new NoMagazineFoundException(\sprintf('No magazine could be found or created for object "%s"', $object['id']));

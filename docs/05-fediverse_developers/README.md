@@ -310,3 +310,56 @@ The announced type can be `Create`, `Update`, `Add`, `Remove`, `Announce`, `Dele
 ```json
 %activity_mag_announce%
 ```
+
+## Receiving activities
+
+### Routing an inbound object to a magazine
+
+An object arriving at an inbox has to be filed under some magazine. Mbin decides in
+this order:
+
+1. **Addressing.** If `audience`, `to` or `cc` names a magazine, that magazine wins.
+   Software that models communities says so explicitly, and an explicit statement beats
+   any inference.
+2. **The delivering actor.** Otherwise, if a magazine follows the actor that delivered
+   and signed the activity, the object is filed there. The deliverer is read from the
+   activity, not from the object: an actor that delivered an activity has asserted
+   something about it, while `attributedTo` only states who composed it. This is what
+   lets a magazine follow an instance actor that announces posts written by the accounts
+   it hosts, which is how WriteFreely federates a whole site through one actor.
+3. **The author.** Otherwise, if a magazine follows the actor in `attributedTo`. An
+   object Mbin fetched itself has no delivering actor, so the author is the only claim
+   available for it.
+4. **The `random` magazine**, if one exists. Otherwise the object is dropped and the
+   reason is logged.
+
+A magazine follow declares which activity kinds it carries: `create`, `announce` or
+`both`. A follow that does not carry the delivered kind does not answer, and the object
+falls through to the next step rather than being filed under a magazine whose moderator
+asked not to receive that kind. The default is taken from the followed actor's type when
+the follow is created, and a moderator can change it:
+
+| Followed actor | Default | Why |
+|---|---|---|
+| `Person` and anything unlisted below | `create` | their own posts. Carrying their announces would file everything they boost into the magazine |
+| `Application`, `Service` | `both` | an instance actor may relay by announcing or deliver directly, so both makes the follow work either way |
+| `Group` | `announce` | a Group's announces are the one-to-one equivalent of Mbin threads |
+
+### Routing does not change visibility
+
+Visibility is decided separately, from the object's own addressing:
+
+* An object naming the Public collection in `to` or `cc` is **visible**.
+* An object naming only the author's followers collection is **followers-only**, and is
+  stored private. WriteFreely addresses an unlisted blog's posts this way, and
+  Mastodon's followers-only posts have the same shape.
+
+A private object is shown to a signed in user who follows its author, and to nobody
+else. **A magazine that follows the author does not widen that.** Such an object is
+routed into the magazine like any other and then remains invisible to everyone who does
+not personally follow the author.
+
+That is deliberate, not an oversight. Re-delivering followers-only content to everyone
+who can read a magazine would show it to people the sender never addressed, which is
+the opposite of what "followers only" means on the wire. A reader who wants an unlisted
+blog's posts should follow that blog's actor.

@@ -8,6 +8,7 @@
             <tr>
                 <th>{{ 'name'|trans }}</th>
                 <th>{{ 'status'|trans }}</th>
+                <th>{{ 'magazine_follow_kind'|trans }}</th>
                 <th>{{ 'created'|trans }}</th>
                 <th></th>
             </tr>
@@ -28,6 +29,7 @@
                             danger: follow.status is same as(FOLLOW_REJECTED)
                         }) }}">{{ follow.status|trans }}</span>
                     </td>
+                    <td>{{ ('magazine_follow_kind_' ~ follow.kind.value)|trans }}</td>
                     <td>{{ component('date', {date: follow.createdAt}) }}</td>
                     <td>
                         <form method="post"
@@ -58,6 +60,18 @@
             <div>
                 <label for="actor">{{ 'magazine_follow_actor'|trans }}</label>
                 <input id="actor" type="text" name="actor" placeholder="{{ 'magazine_follow_actor_placeholder'|trans }}">
+            </div>
+            <div>
+                <label for="kind">{{ 'magazine_follow_kind'|trans }}</label>
+                <select id="kind" name="kind">
+                    <option value="">{{ 'magazine_follow_kind_default'|trans }}</option>
+                    <option value="create">{{ 'magazine_follow_kind_create'|trans }}</option>
+                    <option value="announce">{{ 'magazine_follow_kind_announce'|trans }}</option>
+                    <option value="both">{{ 'magazine_follow_kind_both'|trans }}</option>
+                </select>
+            </div>
+            <div>
+                <small>{{ 'magazine_follow_kind_help'|trans }}</small>
             </div>
             <div class="actions">
                 <button class="btn btn__primary" type="submit">{{ 'add_follow'|trans }}</button>
