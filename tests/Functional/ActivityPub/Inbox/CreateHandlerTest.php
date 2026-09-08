@@ -264,17 +264,17 @@ class CreateHandlerTest extends ActivityPubFunctionalTestCase
         self::assertEquals(['@someOtherUser@some.instance.tld'], $post->mentions);
     }
 
-    public function testMentionOnlyInTagArrayIsInheritedByAReply(): void
+    public function testMentionOnlyInTagArrayIsAddressableByAReply(): void
     {
         $this->bus->dispatch(new ActivityMessage(json_encode($this->createPostWithMentionOnlyInTagArray)));
         $post = $this->postRepository->findOneBy(['apId' => $this->createPostWithMentionOnlyInTagArray['object']['id']]);
         self::assertNotNull($post);
 
-        $comment = $this->createPostComment('a reply that names nobody', $post, $this->localUser);
+        // The reply form prefills the post's mentions, so this is what the
+        // member is handed and what they send unless they delete it. A mention
+        // the post dropped on ingest could never be offered or carried here.
+        $comment = $this->createPostComment('@someOtherUser@some.instance.tld a reply', $post, $this->localUser);
 
-        // handleChain merges the parent's mentions into the reply's, which is
-        // what puts the mentioned user back in the conversation. A mention the
-        // parent dropped could never be inherited here.
         self::assertContains('@someOtherUser@some.instance.tld', $comment->mentions);
     }
 
