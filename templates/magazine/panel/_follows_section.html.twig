@@ -34,8 +34,7 @@
                               name="follow_kind_{{ follow.id }}"
                               action="{{ path('magazine_panel_follow_kind', {magazine_name: magazine.name, follow_id: follow.id}) }}">
                             <input type="hidden" name="token" value="{{ csrf_token('magazine_follow_kind') }}">
-                            <label for="kind_{{ follow.id }}" hidden>{{ 'magazine_follow_kind'|trans }}</label>
-                            <select id="kind_{{ follow.id }}" name="kind">
+                            <select id="kind_{{ follow.id }}" name="kind" aria-label="{{ 'magazine_follow_kind'|trans }}">
                                 <option value="create"{{ follow.kind.value is same as('create') ? ' selected' : '' }}>{{ 'magazine_follow_kind_create'|trans }}</option>
                                 <option value="announce"{{ follow.kind.value is same as('announce') ? ' selected' : '' }}>{{ 'magazine_follow_kind_announce'|trans }}</option>
                                 <option value="both"{{ follow.kind.value is same as('both') ? ' selected' : '' }}>{{ 'magazine_follow_kind_both'|trans }}</option>

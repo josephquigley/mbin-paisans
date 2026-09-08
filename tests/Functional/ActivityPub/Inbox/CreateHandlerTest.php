@@ -31,6 +31,7 @@ class CreateHandlerTest extends ActivityPubFunctionalTestCase
     private array $createMessage;
     private array $createMastodonPostWithMention;
     private array $createMastodonPostWithMentionWithoutTagArray;
+    private array $createPostWithMentionOnlyInTagArray;
     private array $createPostWithPublicNS;
     private array $createPostWithPublicShortURL;
 
@@ -48,6 +49,7 @@ class CreateHandlerTest extends ActivityPubFunctionalTestCase
         $this->createMessage = $this->createRemoteMessage($this->remoteUser, $this->localUser);
         $this->setupMastodonPost();
         $this->setupMastodonPostWithoutTagArray();
+        $this->setupPostWithMentionOnlyInTagArray();
         $this->setupPostWithOtherPublicStrings();
     }
 
@@ -251,6 +253,31 @@ class CreateHandlerTest extends ActivityPubFunctionalTestCase
         self::assertEquals('@remoteUser@remote.mbin', $mentions[0]);
     }
 
+    public function testMentionOnlyInTagArrayIsStoredOnThePost(): void
+    {
+        $this->bus->dispatch(new ActivityMessage(json_encode($this->createPostWithMentionOnlyInTagArray)));
+        $post = $this->postRepository->findOneBy(['apId' => $this->createPostWithMentionOnlyInTagArray['object']['id']]);
+        self::assertNotNull($post);
+        // Nothing in the body names the mentioned user, so extracting the body
+        // finds nothing. The Mention tag is the only place the address exists.
+        self::assertEmpty($this->mentionManager->extract($post->body) ?? []);
+        self::assertEquals(['@someOtherUser@some.instance.tld'], $post->mentions);
+    }
+
+    public function testMentionOnlyInTagArrayIsAddressableByAReply(): void
+    {
+        $this->bus->dispatch(new ActivityMessage(json_encode($this->createPostWithMentionOnlyInTagArray)));
+        $post = $this->postRepository->findOneBy(['apId' => $this->createPostWithMentionOnlyInTagArray['object']['id']]);
+        self::assertNotNull($post);
+
+        // The reply form prefills the post's mentions, so this is what the
+        // member is handed and what they send unless they delete it. A mention
+        // the post dropped on ingest could never be offered or carried here.
+        $comment = $this->createPostComment('@someOtherUser@some.instance.tld a reply', $post, $this->localUser);
+
+        self::assertContains('@someOtherUser@some.instance.tld', $comment->mentions);
+    }
+
     public function testPostWithPublicNs(): void
     {
         $this->bus->dispatch(new ActivityMessage(json_encode($this->createPostWithPublicNS)));
@@ -336,6 +363,32 @@ class CreateHandlerTest extends ActivityPubFunctionalTestCase
         $this->entitiesToRemoveAfterSetup[] = $entry;
 
         return $create;
+    }
+
+    /**
+     * A post whose only mention is in the tag array, with nothing in the
+     * content pointing at it.
+     *
+     * Mastodon and GoToSocial both address this way when the mention is not
+     * meant to be part of the visible text, and Mbin itself produces such
+     * objects: MentionManager::handleChain adds the parent's mentions and the
+     * parent's author to a reply, and MentionsWrapper::build then emits a
+     * Mention tag for each of them, whether or not the author typed them.
+     */
+    private function setupPostWithMentionOnlyInTagArray(): void
+    {
+        $this->createPostWithMentionOnlyInTagArray = $this->createRemotePostInLocalMagazine($this->localMagazine, $this->remoteUser);
+        unset($this->createPostWithMentionOnlyInTagArray['object']['source']);
+        $text = '<p>a post that mentions nobody in its text</p>';
+        $this->createPostWithMentionOnlyInTagArray['object']['contentMap']['en'] = $text;
+        $this->createPostWithMentionOnlyInTagArray['object']['content'] = $text;
+        $this->createPostWithMentionOnlyInTagArray['object']['tag'] = [
+            [
+                'type' => 'Mention',
+                'href' => 'https://some.instance.tld/u/someOtherUser',
+                'name' => '@someOtherUser@some.instance.tld',
+            ],
+        ];
     }
 
     private function setupPostWithOtherPublicStrings(): void
