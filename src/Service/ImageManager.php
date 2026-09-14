@@ -178,7 +178,11 @@ class ImageManager implements ImageManagerInterface
                 [
                     'timeout' => 5,
                     'headers' => [
-                        'Accept' => implode(', ', array_diff(self::IMAGE_MIMETYPES, ['image/webp', 'image/avif'])),
+                        // JPEG XL, HEIC and HEIF are excluded because validate() reads the
+                        // downloaded file with getimagesize(), which does not understand any
+                        // of them. A content negotiating CDN takes whatever we advertise, so
+                        // offering a format we cannot read loses the image.
+                        'Accept' => implode(', ', array_diff(self::IMAGE_MIMETYPES, ['image/webp', 'image/avif', 'image/jxl', 'image/heic', 'image/heif'])),
                     ],
                 ]
             );
